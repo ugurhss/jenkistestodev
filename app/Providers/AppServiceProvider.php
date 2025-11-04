@@ -13,12 +13,14 @@ use App\Repositories\Department\DepartmentRepository;
 use App\Repositories\Faculty\FacultyRepository;
 use App\Repositories\Group\GroupRepository;
 use App\Repositories\ModelClass\ModelClassRepository;
+use App\Repositories\Student\StudentRepository;
 use App\Repositories\University\UniversityRepository;
 use App\Services\City\CityService;
 use App\Services\Department\DepartmentService;
 use App\Services\Faculty\FacultyService;
 use App\Services\Group\GroupService;
 use App\Services\ModelClass\ModelClassService;
+use App\Services\Student\StudentService;
 use App\Services\University\UniversityService;
 use Illuminate\Support\ServiceProvider;
 
@@ -52,6 +54,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(GroupService::class, function ($app) {
             return new GroupService(new GroupRepository(new Group()));
+        });
+
+          $this->app->bind(StudentService::class, function ($app) {
+            return new StudentService($app->make(StudentRepository::class));
         });
 
         // Geliştirici ortamında debug helper aktif et (opsiyonel)

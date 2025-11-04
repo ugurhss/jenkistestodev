@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\api;
 
+use App\Http\Controllers\Controller;
 use App\Services\City\CityService;
 use App\Services\ModelClass\ModelClassService;
 use App\Services\University\UniversityService;

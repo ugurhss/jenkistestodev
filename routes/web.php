@@ -1,9 +1,10 @@
 <?php
 
+use App\Http\Controllers\api\DependentDropdownController;
 use App\Http\Controllers\Dashboard\DashboardController;
-use App\Http\Controllers\DependentDropdownController;
-use App\Http\Controllers\GroupController;
-use App\Http\Controllers\ProfileController; // Breeze profil denetleyicisi
+use App\Http\Controllers\Group\GroupController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Student\StudentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,12 +41,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     // Grup İşlemleri
-    Route::get('/groups/create', [GroupController::class, 'create'])->name('groups.create');
-    Route::post('/groups', [GroupController::class, 'store'])->name('groups.store');
+    Route::get('/groups/create', [GroupController::class, 'grupCreate'])->name('groups.create');
+    Route::post('/groups', [GroupController::class, 'grupStore'])->name('groups.store');
 
     // Grup Detay, Öğrenci Ekleme ve Bildirim Gönderme
-    Route::get('/groups/{group}', [GroupController::class, 'show'])->name('groups.show');//adım 2
-    Route::post('/groups/{group}/students', [GroupController::class, 'addStudent'])->name('groups.addStudent');
+    Route::get('/groups/{group}', [GroupController::class, 'grupShow'])->name('groups.show');//adım 2
+    Route::post('/groups/{group}/students', [StudentController::class, 'studentStore'])->name('groups.addStudent');
     Route::post('/groups/{group}/announcements', [GroupController::class, 'storeAnnouncement'])->name('groups.storeAnnouncement');
 
     // --- Dependent Dropdown için API Rotaları ---

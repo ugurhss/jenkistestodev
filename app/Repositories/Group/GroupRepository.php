@@ -8,26 +8,42 @@ class GroupRepository
 {
     protected Group $model;
 
+    /**
+     * Repository constructor.
+     * Burada Group modelini enjekte ediyoruz.
+     */
     public function __construct(Group $model)
     {
         $this->model = $model;
     }
 
+    /**
+     * Tüm grupları getirir.
+     */
     public function all()
     {
-        return $this->model->with(['students', 'announcements'])->get();
+        return $this->model->all();
     }
 
+    /**
+     * ID’ye göre grup döndürür.
+     */
     public function find(int $id)
     {
-        return $this->model->with(['students', 'announcements'])->findOrFail($id);
+        return $this->model->findOrFail($id);
     }
 
+    /**
+     * Yeni grup oluşturur.
+     */
     public function create(array $data)
     {
         return $this->model->create($data);
     }
 
+    /**
+     * Grubu günceller.
+     */
     public function update(int $id, array $data)
     {
         $group = $this->find($id);
@@ -35,30 +51,28 @@ class GroupRepository
         return $group;
     }
 
+    /**
+     * Grubu siler.
+     */
     public function delete(int $id)
     {
-        $group = $this->find($id);
-        return $group->delete();
+        return $this->model->destroy($id);
     }
 
-    // Grup özel işlemleri
-  public function attachStudent(int $groupId, int $userId)
-{
-    $group = $this->find($groupId);
-    if ($group && !$group->students()->where('user_id', $userId)->exists()) {
-        $group->students()->attach($userId);
-    }
-}
-
+    /**
+     * Gruba bağlı öğrencileri getirir.
+     */
     public function getStudents(int $groupId)
     {
-        return $this->find($groupId)->students;
+        $group = $this->find($groupId);
+        return $group->students;
     }
 
+    /**
+     * Kullanıcının oluşturduğu grupları getirir.
+     */
     public function getGroupsByUserId(int $userId)
     {
         return $this->model->where('user_id', $userId)->get();
     }
-
-
 }

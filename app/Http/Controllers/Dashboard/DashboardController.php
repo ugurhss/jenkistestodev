@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\Dashboard; // <--- 1. DÜZELTME: Namespace güncellendi
+namespace App\Http\Controllers\Dashboard;
 
-use App\Http\Controllers\Controller; // <--- 2. DÜZELTME: Temel Controller sınıfı eklendi
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
