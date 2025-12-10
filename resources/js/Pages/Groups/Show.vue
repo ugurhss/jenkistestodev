@@ -113,13 +113,30 @@ const studentCount = computed(() => props.students?.length || 0)
                     </svg>
                     Duyuru Ekle
                 </Link>
+
                 <button @click="deleteGroup" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-semibold rounded-xl transition shadow-md hover:shadow-lg hover:shadow-red-500/30 active:scale-95">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                     Sil
                 </button>
+
+
+        <Link :href="route('students.create', props.group.id)"
+      class="inline-flex items-center px-6 py-3
+             bg-black/90 border border-yellow-500/70
+             text-yellow-400 font-semibold rounded-xl
+             shadow-md hover:shadow-lg hover:shadow-yellow-500/30
+             hover:bg-black active:scale-95 transition">
+    <svg class="w-5 h-5 mr-2 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 4v16m8-8H4" />
+    </svg>
+    Öğrenci Ekle
+</Link>
+
             </div>
+
         </div>
 
         <!-- Öğrenciler Section -->

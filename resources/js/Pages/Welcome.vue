@@ -9,16 +9,13 @@ const props = defineProps({
     phpVersion: String,
 });
 
-// --- STATE ---
 const isMenuOpen = ref(false);
 const activeTab = ref('privacy');
 const roleSelection = ref('leader');
 
-// --- REFS ---
 const cursorDot = ref(null);
 const cursorOutline = ref(null);
 
-// --- LOGIC ---
 const handleMouseMove = (e) => {
     if (!cursorDot.value || !cursorOutline.value) return;
     const { clientX, clientY } = e;
@@ -26,30 +23,37 @@ const handleMouseMove = (e) => {
     cursorDot.value.style.left = `${clientX}px`;
     cursorDot.value.style.top = `${clientY}px`;
 
-    cursorOutline.value.animate({
-        left: `${clientX}px`,
-        top: `${clientY}px`
-    }, { duration: 500, fill: "forwards" });
+    cursorOutline.value.animate(
+        { left: `${clientX}px`, top: `${clientY}px` },
+        { duration: 350, fill: 'forwards' }
+    );
 };
 
 onMounted(() => {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('in-view');
-            }
-        });
-    }, { threshold: 0.1 });
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('section-in-view');
+                }
+            });
+        },
+        { threshold: 0.16 }
+    );
 
-    document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+    document.querySelectorAll('.section-animate').forEach((el) => observer.observe(el));
 
-    if (window.matchMedia("(min-width: 1024px)").matches) {
+    if (window.matchMedia('(min-width: 1024px)').matches) {
         document.body.classList.add('custom-cursor-active');
         window.addEventListener('mousemove', handleMouseMove);
 
         document.addEventListener('mouseover', (e) => {
             const target = e.target;
-            if (target.tagName === 'A' || target.tagName === 'BUTTON' || target.closest('.hover-trigger')) {
+            if (
+                target.tagName === 'A' ||
+                target.tagName === 'BUTTON' ||
+                target.closest('.hover-trigger')
+            ) {
                 document.body.classList.add('cursor-hover');
             } else {
                 document.body.classList.remove('cursor-hover');
@@ -61,689 +65,1879 @@ onMounted(() => {
 onUnmounted(() => {
     window.removeEventListener('mousemove', handleMouseMove);
     document.body.classList.remove('custom-cursor-active');
+    document.body.classList.remove('cursor-hover');
 });
 
-const toggleMenu = () => isMenuOpen.value = !isMenuOpen.value;
+const toggleMenu = () => (isMenuOpen.value = !isMenuOpen.value);
 </script>
 
 <template>
     <Head title="COMMUN | İletişimi Özgürleştir" />
 
-    <div class="app-wrapper">
+    <div class="page-root">
+        <!-- background -->
+        <div class="bg-pattern"></div>
         <div class="bg-noise"></div>
-        <div class="bg-glow glow-purple"></div>
-        <div class="bg-glow glow-emerald"></div>
 
-        <div class="cursor-dot" ref="cursorDot"></div>
-        <div class="cursor-outline" ref="cursorOutline"></div>
+        <!-- custom cursor -->
+        <div ref="cursorDot" class="cursor-dot"></div>
+        <div ref="cursorOutline" class="cursor-outline"></div>
 
-        <nav class="glass-nav">
-            <div class="container nav-inner">
-                <div class="logo">
-                    <span class="logo-icon"><i class="fas fa-bolt"></i></span>
-                    COMMUN
+        <!-- NAVBAR -->
+        <nav class="nav-fixed">
+            <div class="nav-inner">
+                <div class="nav-left">
+                    <div class="logo-mark">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="logo-text">
+                        <span class="logo-main">COMMUN</span>
+                        <span class="logo-sub">privacy-first notices</span>
+                    </div>
                 </div>
 
-                <div class="hamburger hover-trigger" @click="toggleMenu">
-                    <i class="fas fa-bars"></i>
-                </div>
-
-                <div class="nav-menu" :class="{ 'is-open': isMenuOpen }">
+                <div class="nav-center">
                     <a href="#features" class="nav-link hover-trigger">Özellikler</a>
                     <a href="#community" class="nav-link hover-trigger">Topluluklar</a>
                     <a href="#roles" class="nav-link hover-trigger">Kullanım</a>
+                </div>
 
-                    <div v-if="canLogin" class="auth-actions">
-                        <Link v-if="$page.props.auth.user" :href="route('dashboard')" class="btn-primary hover-trigger">
+                <div class="nav-right">
+                    <div v-if="canLogin" class="nav-auth">
+                        <Link
+                            v-if="$page.props.auth.user"
+                            :href="route('dashboard')"
+                            class="btn-outline hover-trigger"
+                        >
                             Panele Git
                         </Link>
                         <template v-else>
-                            <Link :href="route('login')" class="nav-link hover-trigger">Giriş</Link>
-                            <Link v-if="canRegister" :href="route('register')" class="btn-primary hover-trigger">
+                            <Link :href="route('login')" class="nav-login hover-trigger">
+                                Giriş
+                            </Link>
+                            <Link
+                                v-if="canRegister"
+                                :href="route('register')"
+                                class="btn-primary hover-trigger"
+                            >
                                 Ücretsiz Başla
                             </Link>
                         </template>
                     </div>
+
+                    <button
+                        type="button"
+                        class="nav-toggle hover-trigger"
+                        @click="toggleMenu"
+                    >
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- mobile -->
+            <div v-if="isMenuOpen" class="nav-mobile">
+                <a href="#features" @click="isMenuOpen = false" class="nav-mobile-link">
+                    Özellikler
+                </a>
+                <a href="#community" @click="isMenuOpen = false" class="nav-mobile-link">
+                    Topluluklar
+                </a>
+                <a href="#roles" @click="isMenuOpen = false" class="nav-mobile-link">
+                    Kullanım
+                </a>
+
+                <div v-if="canLogin" class="nav-mobile-auth">
+                    <Link
+                        v-if="$page.props.auth.user"
+                        :href="route('dashboard')"
+                        class="btn-primary w-full hover-trigger"
+                        @click="isMenuOpen = false"
+                    >
+                        Panele Git
+                    </Link>
+                    <template v-else>
+                        <Link
+                            :href="route('login')"
+                            class="btn-outline w-full hover-trigger"
+                            @click="isMenuOpen = false"
+                        >
+                            Giriş
+                        </Link>
+                        <Link
+                            v-if="canRegister"
+                            :href="route('register')"
+                            class="btn-primary w-full hover-trigger"
+                            @click="isMenuOpen = false"
+                        >
+                            Ücretsiz Başla
+                        </Link>
+                    </template>
                 </div>
             </div>
         </nav>
 
-        <section class="hero-section">
-            <div class="container hero-content animate-on-scroll">
-                <div class="hero-badge">
-                    <i class="fas fa-shield-alt"></i> %100 Gizlilik Odaklı & Ücretsiz
-                </div>
-                <h1 class="hero-title">
-                    Numaranı Paylaşma,<br>
-                    <span class="gradient-text">Topluluğu Yakala.</span>
-                </h1>
-                <p class="hero-desc">
-                    Üniversite kulüpleri, apartmanlar ve organizasyonlar için en güvenli duyuru platformu.
-                    WhatsApp gruplarındaki numara ifşasına ve gereksiz sohbete son verin.
-                </p>
-                <div class="hero-cta">
-                    <Link :href="route('register')" class="btn-xl hover-trigger">
-                        Topluluk Oluştur <i class="fas fa-arrow-right"></i>
-                    </Link>
-                    <a href="#features" class="btn-text hover-trigger">
-                        <i class="fas fa-play-circle"></i> Nasıl Çalışır?
-                    </a>
-                </div>
-            </div>
-        </section>
-
-        <div class="sponsors-wrapper" id="community">
-            <div class="sponsors-tilt">
-                <div class="marquee-track">
-                    <div class="logo-box">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/ff/Inonu_University_Logo.jpg" alt="İnönü Üniversitesi">
-                    </div>
-                    <div class="logo-box">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Antalya_Bilim_Üniversitesi_logo.svg/1024px-Antalya_Bilim_Üniversitesi_logo.svg.png" alt="Antalya Bilim Üniversitesi">
-                    </div>
-                    <div class="logo-box circle-box">
-                        <img src="https://pbs.twimg.com/profile_images/1820692112934912000/OYoH6C6e_400x400.jpg" alt="Topluluk">
-                    </div>
-                    <div class="logo-box">
-                        <img src="https://upload.wikimedia.org/wikipedia/tr/archive/0/02/20210216161421%21Gebze_Teknik_%C3%9Cniversitesi_logo.png" alt="GTÜ">
-                    </div>
-
-                    <div class="logo-box">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/ff/Inonu_University_Logo.jpg" alt="İnönü Üniversitesi">
-                    </div>
-                    <div class="logo-box">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Antalya_Bilim_Üniversitesi_logo.svg/1024px-Antalya_Bilim_Üniversitesi_logo.svg.png" alt="Antalya Bilim Üniversitesi">
-                    </div>
-                    <div class="logo-box circle-box">
-                        <img src="https://pbs.twimg.com/profile_images/1820692112934912000/OYoH6C6e_400x400.jpg" alt="Topluluk">
-                    </div>
-                    <div class="logo-box">
-                        <img src="https://upload.wikimedia.org/wikipedia/tr/archive/0/02/20210216161421%21Gebze_Teknik_%C3%9Cniversitesi_logo.png" alt="GTÜ">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <section id="features" class="features-section container animate-on-scroll">
-            <div class="section-head">
-                <h2>Sistemin Beyni</h2>
-                <p>Geleneksel mesajlaşma uygulamalarının karmaşasından kurtulun.</p>
-            </div>
-
-            <div class="feature-tabs">
-                <div class="tabs-list">
-                    <button class="tab-btn hover-trigger" :class="{ active: activeTab === 'privacy' }" @click="activeTab = 'privacy'">
-                        <div class="t-icon"><i class="fas fa-user-secret"></i></div>
-                        <div class="t-info">
-                            <strong>Gizlilik Kalkanı</strong>
-                            <span>Telefon numaranız asla görünmez.</span>
+        <!-- MAIN -->
+        <main class="main-wrapper">
+            <!-- HERO -->
+            <section class="section-animate hero">
+                <div class="hero-grid">
+                    <!-- left -->
+                    <div class="hero-left">
+                        <div class="hero-chip">
+                            <span class="chip-dot"></span>
+                            %100 Gizlilik · Tek Yönlü Duyuru · Ücretsiz
                         </div>
+
+                        <h1 class="hero-title">
+                            Numaran görünmesin,
+                            <span class="hero-gradient">topluluk elinin altında olsun.</span>
+                        </h1>
+
+                        <p class="hero-desc">
+                            Üniversite kulüpleri, apartmanlar ve organizasyonlar için tasarlanmış, telefon
+                            numarası ifşası olmadan duyuru yapabileceğin sade bir iletişim katmanı.
+                        </p>
+
+                        <div class="hero-cta">
+                            <Link
+                                :href="route('register')"
+                                class="btn-primary btn-lg hover-trigger"
+                            >
+                                Topluluk Oluştur
+                                <i class="fas fa-arrow-right"></i>
+                            </Link>
+                            <a href="#features" class="hero-secondary hover-trigger">
+                                <span class="hero-secondary-icon">
+                                    <i class="fas fa-play"></i>
+                                </span>
+                                Nasıl çalışıyor?
+                            </a>
+                        </div>
+
+                        <div class="hero-metrics">
+                            <div class="metric">
+                                <span class="metric-value">10K+</span>
+                                <span class="metric-label">gizli üye</span>
+                            </div>
+                            <span class="metric-divider"></span>
+                            <div class="metric">
+                                <span class="metric-value">250+</span>
+                                <span class="metric-label">topluluk</span>
+                            </div>
+                            <span class="metric-divider hide-sm"></span>
+                            <div class="metric hide-sm">
+                                <span class="metric-value">0</span>
+                                <span class="metric-label">gereksiz sohbet</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- right: device mock -->
+                    <div class="hero-right">
+                        <div class="device-frame">
+                            <div class="device-notch"></div>
+                            <div class="device-inner">
+                                <div class="device-header">
+                                    <span class="badge badge-soft">
+                                        <span class="badge-dot"></span>
+                                        Duyuru Kanalı
+                                    </span>
+                                    <span class="badge badge-outline">Gizli Mod</span>
+                                </div>
+
+                                <div class="device-list">
+                                    <div class="notif-card primary">
+                                        <div class="notif-icon">
+                                            <i class="fas fa-university"></i>
+                                        </div>
+                                        <div class="notif-content">
+                                            <div class="notif-title">
+                                                Bilgisayar Müh. Topluluğu
+                                            </div>
+                                            <div class="notif-text">
+                                                Yarın 19:00 kariyer buluşması. Numaran görünmeden katıl.
+                                            </div>
+                                            <div class="notif-meta">
+                                                <span>2 dk önce</span>
+                                                <span class="pill pill-soft">Etkinlik</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="notif-card">
+                                        <div class="notif-icon">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <div class="notif-content">
+                                            <div class="notif-title">Vadi Sitesi Duyuru</div>
+                                            <div class="notif-text">
+                                                Asansör bakımı 13:00–15:00 arası. Sadece bildirim, sohbet yok.
+                                            </div>
+                                            <div class="notif-meta">
+                                                <span>1 saat önce</span>
+                                                <span class="pill pill-outline">Acil</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="notif-card">
+                                        <div class="notif-icon">
+                                            <i class="fas fa-gamepad"></i>
+                                        </div>
+                                        <div class="notif-content">
+                                            <div class="notif-title">E-Spor Kulübü</div>
+                                            <div class="notif-text">
+                                                Turnuva kayıtlarını QR kodu tara, tek tıkla katıl.
+                                            </div>
+                                            <div class="notif-meta">
+                                                <span>Bugün</span>
+                                                <span class="pill pill-soft">
+                                                    <i class="fas fa-qrcode"></i> QR Katılım
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="device-footer">
+                                    <span>
+                                        <i class="fas fa-user-secret"></i> Numaran görünmez
+                                    </span>
+                                    <span>
+                                        <i class="fas fa-bell"></i> Sadece duyuru
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SPONSORS -->
+            <section id="community" class="section-animate sponsors">
+                <div class="sponsors-head">
+                    <div>
+                        <p class="eyebrow">erken kullanan topluluklar</p>
+                        <h2>Türkiye genelinde topluluklar COMMUN'a geçiyor.</h2>
+                    </div>
+                    <p class="sponsors-note">
+                        Klasik WhatsApp gruplarını bırakıp sadece duyuru kullanan yüzlerce topluluk.
+                    </p>
+                </div>
+
+                <div class="sponsors-marquee-wrap">
+                    <div class="sponsors-strip">
+                        <!-- BURADAKİ IMG SRC'LERİ KENDİ LOGOLARINLA DEĞİŞTİREBİLİRSİN -->
+                        <div class="sponsor-item">
+                            <div class="sponsor-logo">
+                                <img src="https://yt3.googleusercontent.com/ytc/AIdro_nnpxTpH03bCbzY669bkxx1TZwASriiRHijPaL9NaM3kSI=s900-c-k-c0x00ffffff-no-rj" alt="İnönü Üniversitesi" />
+                            </div>
+                            <div class="sponsor-label">İnönü Üniversitesi</div>
+                        </div>
+
+                        <div class="sponsor-item">
+                            <div class="sponsor-logo">
+                                <img src="https://yt3.googleusercontent.com/ytc/AIdro_nnpxTpH03bCbzY669bkxx1TZwASriiRHijPaL9NaM3kSI=s900-c-k-c0x00ffffff-no-rj" alt="Antalya Bilim Üniversitesi" />
+                            </div>
+                            <div class="sponsor-label">Antalya Bilim Üniversitesi</div>
+                        </div>
+
+                        <div class="sponsor-item">
+                            <div class="sponsor-logo">
+                                <img src="https://www.adalet.gen.tr/wp-content/uploads/2016/07/adalet-bakanligi-logo.jpg" alt="Gebze Teknik Üniversitesi" />
+                            </div>
+                            <div class="sponsor-label">Gebze Teknik Üniversitesi</div>
+                        </div>
+
+                        <div class="sponsor-item">
+                            <div class="sponsor-logo">
+                                <img src="https://www.adalet.gen.tr/wp-content/uploads/2016/07/adalet-bakanligi-logo.jpg" alt="Vadi Sitesi" />
+                            </div>
+                            <div class="sponsor-label">Vadi Sitesi Yönetimi</div>
+                        </div>
+
+                        <div class="sponsor-item">
+                            <div class="sponsor-logo">
+                                <img src="https://www.adalet.gen.tr/wp-content/uploads/2016/07/adalet-bakanligi-logo.jpg" alt="E-Spor Kulübü" />
+                            </div>
+                            <div class="sponsor-label">E-Spor Kulübü</div>
+                        </div>
+
+                        <div class="sponsor-item">
+                            <div class="sponsor-logo">
+                                <img src="https://www.adalet.gen.tr/wp-content/uploads/2016/07/adalet-bakanligi-logo.jpg" alt="İTÜ Yazılım" />
+                            </div>
+                            <div class="sponsor-label">İTÜ Yazılım Topluluğu</div>
+                        </div>
+
+                        <!-- tekrarlar (sonsuz akış için) -->
+                        <div class="sponsor-item">
+                            <div class="sponsor-logo">
+                                <img src="https://www.adalet.gen.tr/wp-content/uploads/2016/07/adalet-bakanligi-logo.jpg" alt="İnönü Üniversitesi" />
+                            </div>
+                            <div class="sponsor-label">İnönü Üniversitesi</div>
+                        </div>
+
+                        <div class="sponsor-item">
+                            <div class="sponsor-logo">
+                                <img src="https://www.adalet.gen.tr/wp-content/uploads/2016/07/adalet-bakanligi-logo.jpg" alt="Antalya Bilim Üniversitesi" />
+                            </div>
+                            <div class="sponsor-label">Antalya Bilim Üniversitesi</div>
+                        </div>
+
+                        <div class="sponsor-item">
+                            <div class="sponsor-logo">
+                                <img src="https://www.adalet.gen.tr/wp-content/uploads/2016/07/adalet-bakanligi-logo.jpg" alt="Vadi Sitesi" />
+                            </div>
+                            <div class="sponsor-label">Vadi Sitesi Yönetimi</div>
+                        </div>
+
+                        <div class="sponsor-item">
+                            <div class="sponsor-logo">
+                                <img src="https://www.adalet.gen.tr/wp-content/uploads/2016/07/adalet-bakanligi-logo.jpg" alt="E-Spor Kulübü" />
+                            </div>
+                            <div class="sponsor-label">E-Spor Kulübü</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FEATURES -->
+            <section id="features" class="section-animate features">
+                <div class="section-title">
+                    <h2>Sistemin kalbi.</h2>
+                    <p>Gürültüsüz, sade ve güvenli bir bildirim katmanı.</p>
+                </div>
+
+                <div class="features-grid">
+                    <!-- tabs -->
+                    <div class="features-tabs">
+                        <button
+                            class="tab-btn hover-trigger"
+                            :class="{ active: activeTab === 'privacy' }"
+                            @click="activeTab = 'privacy'"
+                        >
+                            <div class="tab-icon">
+                                <i class="fas fa-user-secret"></i>
+                            </div>
+                            <div class="tab-text">
+                                <span class="tab-kicker">Gizlilik</span>
+                                <span class="tab-title">Gizlilik Kalkanı</span>
+                                <span class="tab-desc">
+                                    Telefon numaran hiçbir yerde görünmez, lider bile sadece ID görür.
+                                </span>
+                            </div>
+                        </button>
+
+                        <button
+                            class="tab-btn hover-trigger"
+                            :class="{ active: activeTab === 'notify' }"
+                            @click="activeTab = 'notify'"
+                        >
+                            <div class="tab-icon">
+                                <i class="fas fa-bell-slash"></i>
+                            </div>
+                            <div class="tab-text">
+                                <span class="tab-kicker">Gürültü yok</span>
+                                <span class="tab-title">Sadece duyuru</span>
+                                <span class="tab-desc">
+                                    Sohbet, sticker, spam yok. Sadece etkinlik, duyuru, acil durum.
+                                </span>
+                            </div>
+                        </button>
+
+                        <button
+                            class="tab-btn hover-trigger"
+                            :class="{ active: activeTab === 'easy' }"
+                            @click="activeTab = 'easy'"
+                        >
+                            <div class="tab-icon">
+                                <i class="fas fa-qrcode"></i>
+                            </div>
+                            <div class="tab-text">
+                                <span class="tab-kicker">Kolay katılım</span>
+                                <span class="tab-title">QR ile anında</span>
+                                <span class="tab-desc">
+                                    Link veya QR kod ile saniyeler içinde katılım, uygulama zorunlu değil.
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- panel -->
+                    <div class="features-panel">
+                        <div v-if="activeTab === 'privacy'" class="panel-content">
+                            <h3>Kimliğin gerçekten gizli.</h3>
+                            <p>
+                                WhatsApp grubuna girdiğinde numaran anında onlarca kişiye görünür. COMMUN'da
+                                ise sadece sistemde kayıtlı anonim bir profilsin. Tüm yönetim işlemleri
+                                anonim ID üzerinden ilerler.
+                            </p>
+                            <ul>
+                                <li>
+                                    <i class="fas fa-check"></i>
+                                    Numaran hiçbir listede, exportta veya panelde tutulmaz.
+                                </li>
+                                <li>
+                                    <i class="fas fa-check"></i>
+                                    Liderler sadece üye sayısı ve okunma oranı görür.
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div v-else-if="activeTab === 'notify'" class="panel-content">
+                            <h3>Gürültü değil, bilgi gelir.</h3>
+                            <p>
+                                “Günaydın” mesajları, sticker yağmuru ve alakasız sohbetler gitgide yorucu.
+                                COMMUN ise sadece duyuru ve bildirim için tasarlandı.
+                            </p>
+                            <ul>
+                                <li>
+                                    <i class="fas fa-check"></i>
+                                    Topluluk bazlı sessize alma ve öncelikli bildirim ayarları.
+                                </li>
+                                <li>
+                                    <i class="fas fa-check"></i>
+                                    Etkinlik, duyuru ve acil türleri ile anlamlı klasifikasyon.
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div v-else class="panel-content">
+                            <h3>Uygulama zorunlu değil.</h3>
+                            <p>
+                                Topluluk lideri link veya QR kodu paylaşır, üyeler tek tıkla bildirim
+                                kanalına katılır. Dileyen sadece web üzerinden takip eder.
+                            </p>
+                            <ul>
+                                <li>
+                                    <i class="fas fa-check"></i>
+                                    Dakikalar içinde topluluk oluştur, linki paylaş, iş bitti.
+                                </li>
+                                <li>
+                                    <i class="fas fa-check"></i>
+                                    QR kodu panoya as, isteyen okutup anında kanala dahil olsun.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ROLES -->
+            <section id="roles" class="section-animate roles">
+                <div class="section-title">
+                    <h2>Sen hangi taraftasın?</h2>
+                    <p>Topluluğa katılan üye de olabilirsin, yüzlerce kişiye duyuru gönderen lider de.</p>
+                </div>
+
+                <div class="role-toggle">
+                    <button
+                        class="hover-trigger"
+                        :class="{ active: roleSelection === 'member' }"
+                        @click="roleSelection = 'member'"
+                    >
+                        Topluluk Üyesi
                     </button>
-                    <button class="tab-btn hover-trigger" :class="{ active: activeTab === 'notify' }" @click="activeTab = 'notify'">
-                        <div class="t-icon"><i class="fas fa-bell"></i></div>
-                        <div class="t-info">
-                            <strong>Akıllı Bildirim</strong>
-                            <span>Sadece önemli duyuruları alın.</span>
-                        </div>
-                    </button>
-                    <button class="tab-btn hover-trigger" :class="{ active: activeTab === 'easy' }" @click="activeTab = 'easy'">
-                        <div class="t-icon"><i class="fas fa-qrcode"></i></div>
-                        <div class="t-info">
-                            <strong>Hızlı Erişim</strong>
-                            <span>QR ile saniyeler içinde katılın.</span>
-                        </div>
+                    <button
+                        class="hover-trigger"
+                        :class="{ active: roleSelection === 'leader' }"
+                        @click="roleSelection = 'leader'"
+                    >
+                        Topluluk Lideri
                     </button>
                 </div>
 
-                <div class="tab-display glass-card glow-border">
-                    <div v-if="activeTab === 'privacy'" class="tab-content fade-in">
-                        <div class="content-graphic color-primary">
-                            <i class="fas fa-shield-virus"></i>
+                <div class="roles-grid">
+                    <div
+                        class="role-card"
+                        :class="{ active: roleSelection === 'member' }"
+                    >
+                        <div class="role-icon">
+                            <i class="fas fa-user-astronaut"></i>
                         </div>
-                        <h3>Kimliğiniz Güvende</h3>
-                        <p>Bir WhatsApp grubuna girdiğinizde numaranız 200 kişiye görünür. COMMUN'da ise sadece sisteme kayıtlı bir "Hayalet Kullanıcı"sınız. Yöneticiler bile numaranızı göremez, sadece size bildirim iletebilir.</p>
+                        <h3>Öğrenci / Üye</h3>
+                        <p>Duyuruları sessiz ama eksiksiz takip etmek isteyenler için.</p>
+                        <div class="role-price">ÜCRETSİZ</div>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Numaran gizli kalır, kimse göremez.</li>
+                            <li><i class="fas fa-check"></i> Sınırsız sayıda topluluğa katılım.</li>
+                            <li><i class="fas fa-check"></i> Reklamsız, sade deneyim.</li>
+                        </ul>
+                        <Link :href="route('register')" class="btn-outline hover-trigger">
+                            Hemen Katıl
+                        </Link>
                     </div>
 
-                    <div v-if="activeTab === 'notify'" class="tab-content fade-in">
-                        <div class="content-graphic color-accent">
-                            <i class="fas fa-paper-plane"></i>
+                    <div
+                        class="role-card featured"
+                        :class="{ active: roleSelection === 'leader' }"
+                    >
+                        <div class="role-badge">POPÜLER</div>
+                        <div class="role-icon">
+                            <i class="fas fa-crown"></i>
                         </div>
-                        <h3>Sohbet Yok, Duyuru Var</h3>
-                        <p>Telefonunuzda sürekli öten, "Günaydın" mesajlarıyla dolu gruplardan sıkıldınız mı? Burası tek yönlü bir iletişim kanalıdır. Sadece etkinlik, duyuru ve acil durum bildirimleri gelir.</p>
+                        <h3>Yönetici / Lider</h3>
+                        <p>Kulüp başkanları, apartman yöneticileri ve temsilciler için.</p>
+                        <div class="role-price">ÜCRETSİZ</div>
+                        <ul>
+                            <li><i class="fas fa-check"></i> Dakikalar içinde topluluk oluştur.</li>
+                            <li><i class="fas fa-check"></i> QR kod ile hızlı üye toplama.</li>
+                            <li><i class="fas fa-check"></i> Anlık bildirim ve okunma istatistikleri.</li>
+                        </ul>
+                        <Link :href="route('register')" class="btn-primary hover-trigger">
+                            Topluluk Oluştur
+                        </Link>
                     </div>
+                </div>
+            </section>
 
-                    <div v-if="activeTab === 'easy'" class="tab-content fade-in">
-                        <div class="content-graphic color-tertiary">
-                            <i class="fas fa-magic"></i>
+            <!-- TESTIMONIALS MARQUEE (footer üstü) -->
+            <section id="testimonials" class="section-animate testimonials">
+                <div class="testimonials-head">
+                    <div>
+                        <p class="eyebrow">kullananlar ne diyor?</p>
+                        <h2>Gerçek topluluklardan kısa yorumlar.</h2>
+                    </div>
+                    <p class="testimonials-note">
+                        Kulüp başkanları, site yöneticileri ve topluluk liderleri COMMUN deneyimini anlatıyor.
+                    </p>
+                </div>
+
+                <div class="testimonials-marquee-wrap">
+                    <div class="testimonials-strip">
+                        <div class="testimonial-chip">
+                            <div class="chip-avatar">AY</div>
+                            <div class="chip-body">
+                                <div class="chip-name">Ahmet Y.</div>
+                                <div class="chip-role">ODTÜ IEEE Kulüp Başkanı</div>
+                                <div class="chip-quote">
+                                    “Numara paylaşmadan etkinlik duyurmak bizim için büyük rahatlık.”
+                                </div>
+                            </div>
                         </div>
-                        <h3>Uygulama İndirmek Zorunda Değilsin</h3>
-                        <p>İster mobil uygulamayı kullan, ister web üzerinden bildirimleri takip et. Topluluk yöneticisinin paylaştığı linke tıkla veya duvardaki QR kodu okut. İşte bu kadar!</p>
+
+                        <div class="testimonial-chip">
+                            <div class="chip-avatar">ZK</div>
+                            <div class="chip-body">
+                                <div class="chip-name">Zeynep K.</div>
+                                <div class="chip-role">Vadi Sitesi Yöneticisi</div>
+                                <div class="chip-quote">
+                                    “Apartmanda sadece önemli duyurular geliyor, grup kirliliği yok.”
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="testimonial-chip">
+                            <div class="chip-avatar">MS</div>
+                            <div class="chip-body">
+                                <div class="chip-name">Mustafa S.</div>
+                                <div class="chip-role">E-Spor Kulübü Koordinatörü</div>
+                                <div class="chip-quote">
+                                    “Turnuva kayıtlarını COMMUN üzerinden toplamak çok daha net.”
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="testimonial-chip">
+                            <div class="chip-avatar">İY</div>
+                            <div class="chip-body">
+                                <div class="chip-name">İTÜ Yazılım</div>
+                                <div class="chip-role">Topluluk Ekibi</div>
+                                <div class="chip-quote">
+                                    “Sadece duyuru kanalı olması, üyeleri yormadan bilgi vermeyi sağlıyor.”
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- tekrarlar -->
+                        <div class="testimonial-chip">
+                            <div class="chip-avatar">AY</div>
+                            <div class="chip-body">
+                                <div class="chip-name">Ahmet Y.</div>
+                                <div class="chip-role">ODTÜ IEEE Kulüp Başkanı</div>
+                                <div class="chip-quote">
+                                    “WhatsApp yerine COMMUN kullanmak üyelerin işine geldi.”
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="testimonial-chip">
+                            <div class="chip-avatar">ZK</div>
+                            <div class="chip-body">
+                                <div class="chip-name">Zeynep K.</div>
+                                <div class="chip-role">Vadi Sitesi Yöneticisi</div>
+                                <div class="chip-quote">
+                                    “Acil durumlarda herkese tek tıkla bildirim gönderebiliyorum.”
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <div class="footer-inner">
+                <!-- brand -->
+                <div class="footer-col left">
+                    <div class="footer-logo">
+                        <span class="logo-mark small">
+                            <i class="fas fa-bolt"></i>
+                        </span>
+                        <span class="logo-main">COMMUN</span>
+                    </div>
+                    <p>
+                        İletişimi özgürleştiren, gizliliği koruyan modern topluluk platformu. Numara ifşası
+                        olmadan duyuru ve bildirim katmanı.
+                    </p>
+                    <div class="footer-social">
+                        <a href="#" class="hover-trigger">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="hover-trigger">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="hover-trigger">
+                            <i class="fab fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- app + qr -->
+                <div class="footer-col right">
+                    <div class="footer-top-row">
+                        <div class="footer-app">
+                            <h3>Mobil uygulama ile de yönet.</h3>
+                            <p>
+                                Topluluklarını hem web üzerinden hem de mobil uygulama ile kolayca
+                                yönetebileceğin bir yapı için tasarlandı.
+                            </p>
+
+                            <div class="footer-app-body">
+                                <div class="phone-figure">
+                                    <!-- BURAYA UYGULAMA LOGONU KOYABİLİRSİN -->
+                                    <img
+                                        src="/images/app-logo.png"
+                                        alt="COMMUN App"
+                                        class="app-logo-img"
+                                    />
+                                </div>
+
+                                <div class="store-badges">
+                                    <div class="store-badge">
+                                        <i class="fab fa-apple"></i>
+                                        <span>App Store</span>
+                                    </div>
+                                    <div class="store-badge">
+                                        <i class="fab fa-google-play"></i>
+                                        <span>Google Play</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="footer-qr-block">
+                            <h3>QR ile hızlı giriş.</h3>
+                            <p>
+                                Topluluğunun linkini ve QR kodunu paylaş, üyelerin saniyeler içinde güvenli
+                                kanala katılsın.
+                            </p>
+                            <div class="footer-qr">
+                                <div class="qr-box">
+                                    <!-- BURAYA KENDİ QR GÖRSELİNİ KOY -->
+                                    <img
+                                        src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"
+                                        alt="COMMUN QR Kodu"
+                                        class="qr-img"
+                                    />
+                                </div>
+                                <ul class="qr-info">
+                                    <li><i class="fas fa-check"></i> Fiziksel afişlere QR ekleyebilirsin.</li>
+                                    <li><i class="fas fa-check"></i> Numara görünmeden katılım sağlanır.</li>
+                                    <li><i class="fas fa-check"></i> %100 gizlilik odaklı altyapı.</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <section class="comparison-section container animate-on-scroll">
-            <div class="glass-card table-card glow-border">
-                <h3>Neden Tercih Edilmeli?</h3>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Özellik</th>
-                                <th class="text-dim">Diğer Uygulamalar</th>
-                                <th class="text-highlight">COMMUN</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Telefon No Gizliliği</td>
-                                <td class="negative"><i class="fas fa-times"></i> Herkes Görür</td>
-                                <td class="positive"><i class="fas fa-check"></i> <strong>Tamamen Gizli</strong></td>
-                            </tr>
-                            <tr>
-                                <td>Gereksiz Mesajlar</td>
-                                <td class="negative"><i class="fas fa-times"></i> Sohbet Kirliliği</td>
-                                <td class="positive"><i class="fas fa-check"></i> <strong>Sıfır (Sadece Duyuru)</strong></td>
-                            </tr>
-                            <tr>
-                                <td>Ücret</td>
-                                <td class="text-dim">Değişken</td>
-                                <td class="positive"><i class="fas fa-check"></i> <strong>%100 Ücretsiz</strong></td>
-                            </tr>
-                            <tr>
-                                <td>Kullanım Kolaylığı</td>
-                                <td class="text-dim">Kurulum Gerekir</td>
-                                <td class="positive"><i class="fas fa-check"></i> <strong>QR ile Anında</strong></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <section id="roles" class="roles-section container animate-on-scroll">
-            <div class="section-head">
-                <h2>Sen Hangisisin?</h2>
-                <div class="role-switcher glass-switcher">
-                    <button :class="{ active: roleSelection === 'member' }" @click="roleSelection = 'member'" class="hover-trigger">Topluluk Üyesi</button>
-                    <button :class="{ active: roleSelection === 'leader' }" @click="roleSelection = 'leader'" class="hover-trigger">Topluluk Lideri</button>
-                </div>
-            </div>
-
-            <div class="role-cards-wrapper">
-                <div class="role-card glass-card" :class="{ 'card-active': roleSelection === 'member' }">
-                    <div class="card-visual color-primary"><i class="fas fa-user-astronaut"></i></div>
-                    <h3>Öğrenci / Üye</h3>
-                    <p>Duyuruları takip etmek, etkinliklerden haberdar olmak isteyenler için.</p>
-                    <div class="price">ÜCRETSİZ</div>
-                    <ul class="features-list">
-                        <li><i class="fas fa-check"></i> Numaranız Gizli Kalır</li>
-                        <li><i class="fas fa-check"></i> Sınırsız Topluluğa Katılım</li>
-                        <li><i class="fas fa-check"></i> Reklamsız Deneyim</li>
-                    </ul>
-                    <Link :href="route('register')" class="btn-card hover-trigger">Hemen Katıl</Link>
-                </div>
-
-                <div class="role-card featured glass-card" :class="{ 'card-active': roleSelection === 'leader' }">
-                    <div class="badge">POPÜLER</div>
-                    <div class="card-visual color-accent"><i class="fas fa-crown"></i></div>
-                    <h3>Yönetici / Lider</h3>
-                    <p>Kulüp başkanları, apartman yöneticileri ve temsilciler için.</p>
-                    <div class="price">ÜCRETSİZ</div>
-                    <ul class="features-list">
-                        <li><i class="fas fa-check"></i> Kendi Topluluğunu Kur</li>
-                        <li><i class="fas fa-check"></i> QR Kod ile Üye Topla</li>
-                        <li><i class="fas fa-check"></i> Anlık Bildirim Gönder</li>
-                        <li><i class="fas fa-check"></i> Okundu İstatistikleri</li>
-                    </ul>
-                    <Link :href="route('register')" class="btn-primary btn-full hover-trigger">Topluluk Oluştur</Link>
-                </div>
-            </div>
-        </section>
-
-        <footer class="main-footer">
-
-            <div class="footer-tilt-wrapper">
-                <div class="marquee-track-reverse">
-                    <span class="user-item"><i class="fas fa-check-circle"></i> Ahmet Y. (ODTÜ IEEE Bşk.)</span>
-                    <span class="dot">•</span>
-                    <span class="user-item"><i class="fas fa-check-circle"></i> Zeynep K. (Vadi Sitesi Yöneticisi)</span>
-                    <span class="dot">•</span>
-                    <span class="user-item"><i class="fas fa-check-circle"></i> E-Spor Kulübü</span>
-                    <span class="dot">•</span>
-                    <span class="user-item"><i class="fas fa-check-circle"></i> Mustafa S. (Apartman Temsilcisi)</span>
-                    <span class="dot">•</span>
-                    <span class="user-item"><i class="fas fa-check-circle"></i> İTÜ Yazılım</span>
-                    <span class="dot">•</span>
-                    <span class="user-item"><i class="fas fa-check-circle"></i> Ahmet Y. (ODTÜ IEEE Bşk.)</span>
-                    <span class="dot">•</span>
-                    <span class="user-item"><i class="fas fa-check-circle"></i> Zeynep K. (Vadi Sitesi Yöneticisi)</span>
-                    <span class="dot">•</span>
-                    <span class="user-item"><i class="fas fa-check-circle"></i> E-Spor Kulübü</span>
-                    <span class="dot">•</span>
-                    <span class="user-item"><i class="fas fa-check-circle"></i> Mustafa S. (Apartman Temsilcisi)</span>
-                    <span class="dot">•</span>
-                    <span class="user-item"><i class="fas fa-check-circle"></i> İTÜ Yazılım</span>
-                </div>
-            </div>
-
-            <div class="container footer-inner">
-                <div class="footer-brand">
-                    <div class="logo mb-4">
-                        <span class="logo-icon"><i class="fas fa-bolt"></i></span>
-                        COMMUN.
-                    </div>
-                    <p>İletişimi özgürleştiren, gizliliği koruyan modern platform.</p>
-                </div>
-                <div class="footer-links">
-                    <a href="#" class="hover-trigger"><i class="fab fa-twitter"></i></a>
-                    <a href="#" class="hover-trigger"><i class="fab fa-instagram"></i></a>
-                    <a href="#" class="hover-trigger"><i class="fab fa-github"></i></a>
-                </div>
-            </div>
             <div class="footer-bottom">
-                &copy; 2025 COMMUN. Laravel v{{ laravelVersion }} (PHP v{{ phpVersion }})
+                <span>&copy; 2025 COMMUN</span>
+                <span>Laravel v{{ laravelVersion }}</span>
+                <span>PHP v{{ phpVersion }}</span>
             </div>
         </footer>
     </div>
 </template>
 
 <style>
-/* --- FONT & RESET --- */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-
 :root {
-    /* Aurora Borealis Renk Paleti */
-    --bg-dark: #0B0F19;
-    --surface: rgba(255, 255, 255, 0.04);
-    --border: rgba(255, 255, 255, 0.1);
-
-    --primary: #8B5CF6;
-    --primary-light: #A78BFA;
-    --accent: #34D399;
-    --accent-glow: rgba(52, 211, 153, 0.4);
-    --tertiary: #F472B6;
-
-    --text-main: #ffffff;
-    --text-dim: #9CA3AF;
-
-    --success: #34D399;
-    --danger: #F87171;
-    --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --nav-height: 80px;
+    --clr-bg: #31473a;
+    --clr-bg-soft: #3a5645;
+    --clr-accent: #7c8363;
+    --clr-accent-soft: #9aa27a;
+    --clr-surface: #edf4f2;
+    --clr-surface-soft: #e1ebe6;
+    --clr-text-main: #f8faf9;
+    --clr-text-muted: #d0ddd7;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
-html { scroll-behavior: smooth; }
-body {
-    background-color: var(--bg-dark); color: var(--text-main);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+/* ROOT */
+.page-root {
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #3b5a48 0%, #31473a 40%, #233128 100%);
+    color: var(--clr-text-main);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    position: relative;
     overflow-x: hidden;
-    line-height: 1.5;
+    font-size: 15px;
 }
 
-/* --- BACKGROUND FX --- */
+/* background */
+.bg-pattern {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    opacity: 0.3;
+    background-image: radial-gradient(circle at 1px 1px, rgba(237, 244, 242, 0.16) 1px, transparent 0);
+    background-size: 26px 26px;
+}
 .bg-noise {
-    position: fixed; inset: 0; z-index: -1; opacity: 0.03; pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.16;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.8'/%3E%3C/svg%3E");
 }
-.bg-glow {
-    position: fixed; width: 800px; height: 800px; border-radius: 50%;
-    filter: blur(120px); opacity: 0.12; z-index: -1; animation: float 15s infinite alternate ease-in-out;
-}
-.glow-purple { background: var(--primary); top: -20%; left: -10%; }
-.glow-emerald { background: var(--accent); bottom: -20%; right: -10%; animation-delay: -7s; }
 
-@keyframes float { from { transform: translate(0,0) rotate(0deg); } to { transform: translate(50px, 50px) rotate(5deg); } }
-
-/* --- CUSTOM CURSOR --- */
+/* custom cursor */
 .cursor-dot {
-    position: fixed; width: 10px; height: 10px; background: var(--accent); border-radius: 50%;
-    pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); display: none; box-shadow: 0 0 10px var(--accent);
+    position: fixed;
+    width: 7px;
+    height: 7px;
+    background: var(--clr-surface);
+    border-radius: 999px;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    display: none;
+    box-shadow: 0 0 20px rgba(237, 244, 242, 0.9);
 }
 .cursor-outline {
-    position: fixed; width: 40px; height: 40px; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%;
-    pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); display: none;
-    transition: width 0.3s var(--ease-elastic), height 0.3s var(--ease-elastic), background 0.3s, border-color 0.3s;
+    position: fixed;
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(237, 244, 242, 0.7);
+    border-radius: 999px;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    display: none;
+    transition:
+        width 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+        height 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.2s,
+        border-color 0.2s;
 }
-body.custom-cursor-active .cursor-dot, body.custom-cursor-active .cursor-outline { display: block; }
-body.custom-cursor-active { cursor: none; }
-body.cursor-hover .cursor-outline {
-    width: 70px; height: 70px;
-    background: rgba(139, 92, 246, 0.15);
-    border-color: var(--primary-light);
-}
-
-/* --- UTILS --- */
-.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-.gradient-text {
-    background: linear-gradient(135deg, #fff 10%, var(--primary-light) 50%, var(--accent) 90%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    display: inline-block;
-}
-
-.glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(16px) saturate(120%);
-    -webkit-backdrop-filter: blur(16px) saturate(120%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 24px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-}
-
-.glow-border { position: relative; }
-.glow-border::before {
-    content: ''; position: absolute; inset: 0; border-radius: 24px; padding: 1px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
-}
-
-.btn-primary {
-    background: linear-gradient(90deg, var(--primary), var(--accent));
-    color: #fff; padding: 14px 32px; border-radius: 50px; text-decoration: none;
-    font-weight: 700; display: inline-flex; align-items: center; gap: 10px;
-    transition: all 0.3s var(--ease-elastic);
-    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3), 0 0 0 0 rgba(52, 211, 153, 0.7);
-}
-.btn-primary:hover {
-    transform: translateY(-2px) scale(1.03);
-    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4), 0 0 0 4px rgba(52, 211, 153, 0.2);
-}
-.btn-full { width: 100%; justify-content: center; }
-
-/* --- NAVBAR --- */
-.glass-nav {
-    position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
-    height: var(--nav-height);
-    background: rgba(11, 15, 25, 0.7);
-    backdrop-filter: blur(20px) saturate(120%);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.nav-inner { display: flex; justify-content: space-between; align-items: center; height: 100%; }
-.logo { font-size: 1.6rem; font-weight: 800; display: flex; align-items: center; gap: 12px; letter-spacing: -0.5px; color: #fff; }
-.logo-icon { color: var(--accent); filter: drop-shadow(0 0 10px var(--accent-glow)); }
-.nav-menu { display: flex; align-items: center; gap: 36px; }
-.nav-link { color: var(--text-dim); text-decoration: none; font-weight: 600; transition: 0.3s; font-size: 0.95rem; position: relative; }
-.nav-link:hover { color: #fff; }
-.nav-link::after {
-    content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px;
-    background: var(--accent); transition: 0.3s var(--ease-elastic);
-}
-.nav-link:hover::after { width: 100%; }
-.hamburger { display: none; font-size: 1.6rem; cursor: pointer; color: var(--text-main); }
-
-/* --- HERO --- */
-.hero-section { padding: 180px 0 120px; text-align: center; }
-.hero-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(139, 92, 246, 0.1); color: var(--primary-light);
-    padding: 10px 20px; border-radius: 50px; font-size: 0.9rem; font-weight: 600; margin-bottom: 36px;
-    border: 1px solid rgba(139, 92, 246, 0.25); box-shadow: 0 0 20px rgba(139, 92, 246, 0.1);
-}
-.hero-title { font-size: clamp(2.8rem, 7vw, 5.5rem); line-height: 1.1; margin-bottom: 30px; font-weight: 800; letter-spacing: -2px; }
-.hero-desc { font-size: 1.25rem; color: var(--text-dim); max-width: 680px; margin: 0 auto 48px; line-height: 1.7; font-weight: 400; }
-.hero-cta { display: flex; justify-content: center; align-items: center; gap: 24px; flex-wrap: wrap; }
-.btn-xl {
-    background: #fff; color: var(--bg-dark); padding: 20px 48px; border-radius: 16px;
-    font-weight: 800; text-decoration: none; font-size: 1.15rem; transition: 0.3s var(--ease-elastic);
-    display: inline-flex; align-items: center; gap: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-.btn-xl:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(255,255,255,0.15); }
-.btn-text { color: var(--text-main); text-decoration: none; font-weight: 700; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
-.btn-text:hover { color: var(--accent); }
-.btn-text i { font-size: 1.4rem; color: var(--primary-light); }
-
-/* --- MARQUEE (SPONSORS) - ( / ) YÖNÜNDE EĞİM --- */
-.sponsors-wrapper {
-    position: relative; padding: 100px 0; overflow: hidden; margin: 40px 0 120px;
-}
-.sponsors-tilt {
-    transform: rotate(-3deg) scale(1.0); /* Eksi değer: Sol aşağıdan Sağ yukarıya / */
-    background: linear-gradient(90deg, rgba(139, 92, 246, 0.08), rgba(52, 211, 153, 0.08));
-    border-top: 1px solid rgba(255,255,255,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding: 50px 0;
-    width: 105%; margin-left: -2.5%;
-    backdrop-filter: blur(10px);
-}
-.marquee-track {
-    display: flex; gap: 100px; white-space: nowrap;
-    animation: scroll 35s linear infinite; /* SOLA DOĞRU AKAR */
-    align-items: center;
-}
-
-/* Sponsor Logoları */
-.logo-box {
-    background: rgba(255,255,255,0.03);
-    padding: 20px 30px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.05);
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.4s var(--ease-elastic);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-.circle-box { border-radius: 50%; padding: 10px; }
-
-.logo-box img {
-    height: 90px;
-    width: auto;
-    filter: grayscale(100%) brightness(0.8);
-    opacity: 0.7;
-    transition: all 0.4s ease;
+body.custom-cursor-active .cursor-dot,
+body.custom-cursor-active .cursor-outline {
     display: block;
 }
-.circle-box img { border-radius: 50%; height: 110px; }
-
-.logo-box:hover {
-    background: rgba(255,255,255,0.08);
-    border-color: rgba(255,255,255,0.2);
-    transform: scale(1.1);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+body.custom-cursor-active {
+    cursor: none;
 }
-.logo-box:hover img {
-    filter: grayscale(0%) brightness(1);
-    opacity: 1;
-}
-@keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-
-/* --- FEATURES (TABS) --- */
-.features-section { padding: 60px 24px; }
-.section-head { text-align: center; margin-bottom: 70px; }
-.section-head h2 { font-size: 3.2rem; margin-bottom: 20px; font-weight: 800; letter-spacing: -1px; }
-.section-head p { color: var(--text-dim); font-size: 1.2rem; max-width: 600px; margin: 0 auto; }
-
-.feature-tabs { display: grid; grid-template-columns: 400px 1fr; gap: 50px; align-items: start; }
-.tabs-list { display: flex; flex-direction: column; gap: 20px; }
-.tab-btn {
-    display: flex; align-items: center; gap: 24px; padding: 24px 30px;
-    background: transparent; border: 1px solid transparent; border-radius: 20px;
-    cursor: pointer; text-align: left; transition: all 0.3s var(--ease-elastic);
-    position: relative; overflow: hidden;
-}
-.tab-btn::before {
-    content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, var(--primary), var(--accent));
-    opacity: 0; transition: 0.3s; z-index: -1;
-}
-.tab-btn:hover { background: rgba(255,255,255,0.03); transform: translateX(10px); }
-.tab-btn.active { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-
-.t-icon {
-    width: 56px; height: 56px; background: rgba(255,255,255,0.05); border-radius: 16px;
-    display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--text-dim);
-    transition: 0.3s; flex-shrink: 0;
-}
-.tab-btn.active .t-icon {
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    color: #fff; box-shadow: 0 0 25px var(--primary);
-    transform: scale(1.1) rotate(-5deg);
-}
-.t-info strong { display: block; font-size: 1.15rem; color: #fff; margin-bottom: 6px; font-weight: 700; }
-.t-info span { color: var(--text-dim); font-size: 0.95rem; font-weight: 500; }
-
-.tab-display { min-height: 450px; padding: 60px; display: flex; align-items: center; justify-content: center; text-align: center; }
-.tab-content { max-width: 420px; animation: fadeInUp 0.6s var(--ease-elastic) forwards; }
-.content-graphic { font-size: 5.5rem; margin-bottom: 35px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3)); transition: 0.3s; }
-.color-primary { color: var(--primary); text-shadow: 0 0 30px rgba(139, 92, 246, 0.4); }
-.color-accent { color: var(--accent); text-shadow: 0 0 30px rgba(52, 211, 153, 0.4); }
-.color-tertiary { color: var(--tertiary); text-shadow: 0 0 30px rgba(244, 114, 182, 0.4); }
-
-.tab-content h3 { font-size: 2rem; margin-bottom: 20px; font-weight: 800; }
-.tab-content p { color: var(--text-dim); line-height: 1.7; font-size: 1.05rem; }
-
-/* --- COMPARISON --- */
-.comparison-section { padding: 120px 24px; }
-.table-card { padding: 50px; background: rgba(11, 15, 25, 0.6); }
-.table-card h3 { text-align: center; font-size: 2.2rem; margin-bottom: 50px; font-weight: 800; }
-.table-responsive { overflow-x: auto; border-radius: 16px; }
-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 700px; }
-th, td { padding: 24px 30px; text-align: left; border-bottom: 1px solid var(--border); }
-th { font-size: 1.15rem; font-weight: 700; color: #fff; background: rgba(255,255,255,0.02); }
-td { font-weight: 600; color: var(--text-main); }
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: rgba(255,255,255,0.02); }
-
-.text-highlight { color: var(--accent); font-size: 1.3rem; text-shadow: 0 0 15px var(--accent-glow); }
-.positive { color: var(--success); }
-.negative { color: var(--danger); opacity: 0.8; }
-td i { margin-right: 8px; font-size: 1.1rem; }
-
-/* --- ROLES --- */
-.roles-section { padding: 60px 24px 120px; }
-.glass-switcher {
-    display: flex; gap: 5px; justify-content: center;
-    background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-    padding: 6px; border-radius: 100px; width: fit-content; margin: 0 auto 60px;
-    backdrop-filter: blur(10px);
-}
-.glass-switcher button {
-    background: transparent; border: none; padding: 12px 32px; color: var(--text-dim);
-    border-radius: 50px; cursor: pointer; font-weight: 700; transition: all 0.3s var(--ease-elastic); font-size: 1rem;
-}
-.glass-switcher button.active {
-    background: #fff; color: var(--bg-dark);
-    box-shadow: 0 5px 15px rgba(255,255,255,0.2);
+body.cursor-hover .cursor-outline {
+    width: 52px;
+    height: 52px;
+    background: rgba(0, 0, 0, 0.18);
+    border-color: var(--clr-surface);
 }
 
-.role-cards-wrapper { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; align-items: stretch; }
-.role-card {
-    width: 380px; padding: 50px 40px; text-align: center; transition: all 0.4s var(--ease-elastic); position: relative;
-    opacity: 0.6; transform: scale(0.96); border: 2px solid transparent;
-    display: flex; flex-direction: column;
+/* NAVBAR */
+.nav-fixed {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 40;
+    border-bottom: 1px solid rgba(237, 244, 242, 0.12);
+    background: linear-gradient(to bottom, rgba(49, 71, 58, 0.96), rgba(49, 71, 58, 0.9));
+    backdrop-filter: blur(18px);
 }
-.role-card.card-active {
-    opacity: 1; transform: scale(1);
-    border-color: var(--primary);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 30px rgba(139, 92, 246, 0.2);
+.nav-inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 11px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
-.role-card.featured.card-active {
-    border-color: var(--accent);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 30px rgba(52, 211, 153, 0.2);
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
-
-.card-visual { font-size: 3.5rem; margin-bottom: 25px; }
-.role-card h3 { font-size: 1.6rem; margin-bottom: 15px; font-weight: 800; }
-.role-card p { color: var(--text-dim); margin-bottom: 25px; flex-grow: 1; }
-.price { font-size: 2.5rem; font-weight: 900; margin: 30px 0; letter-spacing: -1px; color: #fff; }
-.features-list { list-style: none; margin-bottom: 40px; text-align: left; display: inline-block; }
-.features-list li { margin-bottom: 14px; color: var(--text-dim); display: flex; align-items: center; font-weight: 600; }
-.features-list i { color: var(--accent); margin-right: 12px; font-size: 1.1rem; filter: drop-shadow(0 0 5px var(--accent-glow)); }
-
-.badge {
-    position: absolute; top: -12px; right: 20px;
-    background: linear-gradient(90deg, var(--accent), var(--primary)); color: #fff;
-    padding: 8px 16px; border-radius: 50px; font-weight: 800; font-size: 0.75rem;
-    box-shadow: 0 5px 15px rgba(52, 211, 153, 0.4); letter-spacing: 0.5px;
+.logo-mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 14px;
+    background: radial-gradient(circle at 30% 20%, var(--clr-surface-soft), var(--clr-accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--clr-bg);
+    box-shadow:
+        0 0 20px rgba(237, 244, 242, 0.5),
+        0 0 0 1px rgba(237, 244, 242, 0.2);
 }
-.btn-card {
-    display: block; width: 100%; padding: 18px; border: 2px solid rgba(255,255,255,0.1);
-    border-radius: 16px; color: #fff; text-decoration: none; transition: 0.3s; font-weight: 700;
-    margin-top: auto;
+.logo-mark.small {
+    width: 30px;
+    height: 30px;
+    border-radius: 12px;
 }
-.btn-card:hover { background: #fff; color: var(--bg-dark); border-color: #fff; }
-
-/* --- FOOTER & TERS MARQUEE ( \ YÖNÜNDE EĞİM ) --- */
-.main-footer {
-    border-top: 1px solid var(--border); margin-top: 150px; /* Daha fazla boşluk */
-    background: linear-gradient(to bottom, var(--bg-dark), #05070c);
+.logo-mark i {
+    font-size: 0.95rem;
+}
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+.logo-main {
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    font-size: 1.2rem;
+}
+.logo-sub {
+    font-size: 0.68rem;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+    color: rgba(237, 244, 242, 0.7);
+}
+.nav-center {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+}
+.nav-link {
     position: relative;
+    color: rgba(237, 244, 242, 0.75);
+    text-decoration: none;
+    font-weight: 600;
 }
-.footer-tilt-wrapper {
-    /* Sponsorların tam tersi eğim: +3 derece */
-    transform: rotate(3deg) scale(1.05);
-    background: rgba(139, 92, 246, 0.05);
-    border-top: 1px solid rgba(255,255,255,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding: 20px 0;
-    width: 105%; margin-left: -2.5%; /* Genişlik taşması */
-    margin-top: -60px; /* Footer'ın üstüne binmesi için negatif margin */
-    margin-bottom: 80px;
-    backdrop-filter: blur(5px);
-    position: relative;
-    z-index: 1;
+.nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    width: 0;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--clr-surface);
+    transition: width 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.marquee-track-reverse {
-    display: flex; gap: 60px; white-space: nowrap;
-    animation: scroll-reverse 40s linear infinite; /* SAĞA DOĞRU AKAR */
+.nav-link:hover {
+    color: var(--clr-surface);
+}
+.nav-link:hover::after {
+    width: 100%;
+}
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.nav-auth {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.nav-login {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--clr-surface);
+    text-decoration: none;
+}
+.nav-toggle {
+    display: none;
+    border: none;
+    background: transparent;
+    color: var(--clr-surface);
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid rgba(237, 244, 242, 0.25);
+}
+.nav-toggle i {
+    font-size: 1rem;
+}
+
+/* mobile nav */
+.nav-mobile {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 8px 16px 12px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+    background: rgba(49, 71, 58, 0.96);
+}
+.nav-mobile-link {
+    padding: 9px 4px;
+    border-radius: 8px;
+    color: var(--clr-surface);
+    text-decoration: none;
+}
+.nav-mobile-link:hover {
+    background: rgba(237, 244, 242, 0.06);
+}
+.nav-mobile-auth {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* BUTTONS */
+.btn-primary,
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.18s,
+        background 0.18s,
+        color 0.18s;
+}
+.btn-primary {
+    background: var(--clr-accent);
+    color: var(--clr-bg);
+    border: 1px solid rgba(237, 244, 242, 0.4);
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(237, 244, 242, 0.18);
+}
+.btn-primary:hover {
+    transform: translateY(-1px);
+    background: var(--clr-accent-soft);
+    box-shadow:
+        0 12px 26px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(237, 244, 242, 0.3);
+}
+.btn-outline {
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--clr-surface);
+    border: 1px solid rgba(237, 244, 242, 0.35);
+}
+.btn-outline:hover {
+    transform: translateY(-1px);
+    background: rgba(0, 0, 0, 0.35);
+}
+.btn-lg {
+    padding: 10px 26px;
+    font-size: 1rem;
+}
+
+/* MAIN WRAPPER */
+.main-wrapper {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 110px 16px 40px; /* nav altında boşluk */
+}
+
+/* HERO */
+.hero {
+    margin-top: 12px;
+}
+.hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 34px;
     align-items: center;
 }
-/* SAĞA AKIŞ ANİMASYONU */
-@keyframes scroll-reverse {
-    0% { transform: translateX(-50%); }
-    100% { transform: translateX(0); }
+.hero-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(237, 244, 242, 0.28);
+    background: rgba(0, 0, 0, 0.22);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+}
+.chip-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--clr-surface);
+    box-shadow: 0 0 9px rgba(237, 244, 242, 0.9);
+}
+.hero-title {
+    margin-top: 20px;
+    font-size: clamp(2.2rem, 3.4vw, 2.7rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.08;
+}
+.hero-gradient {
+    display: block;
+    margin-top: 6px;
+    background: linear-gradient(90deg, var(--clr-surface), var(--clr-surface-soft), #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.hero-desc {
+    margin-top: 16px;
+    max-width: 540px;
+    font-size: 1rem;
+    color: var(--clr-text-muted);
+}
+.hero-cta {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+}
+.hero-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--clr-surface);
+    text-decoration: none;
+}
+.hero-secondary-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid rgba(237, 244, 242, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.hero-secondary-icon i {
+    font-size: 0.8rem;
+}
+.hero-metrics {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.82rem;
+    color: var(--clr-text-muted);
+}
+.metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.metric-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--clr-surface);
+}
+.metric-label {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.7rem;
+}
+.metric-divider {
+    width: 1px;
+    height: 28px;
+    background: linear-gradient(to bottom, transparent, rgba(237, 244, 242, 0.6), transparent);
 }
 
-.user-item {
-    font-size: 1.1rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 10px;
+/* DEVICE MOCK */
+.hero-right {
+    display: flex;
+    justify-content: flex-end;
 }
-.user-item i { color: var(--accent); }
-.dot { color: var(--text-dim); opacity: 0.3; }
+.device-frame {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    border-radius: 26px;
+    border: 1px solid rgba(237, 244, 242, 0.25);
+    background: radial-gradient(circle at top, #3b5b49, #25372c);
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.45);
+    padding: 10px;
+}
+.device-notch {
+    position: absolute;
+    inset: 8px 74px auto;
+    height: 14px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.6);
+}
+.device-inner {
+    margin-top: 18px;
+    padding: 10px;
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.36);
+}
+.device-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    margin-bottom: 8px;
+}
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    padding: 3px 8px;
+}
+.badge-soft {
+    background: rgba(237, 244, 242, 0.08);
+    color: var(--clr-surface);
+}
+.badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--clr-surface-soft);
+}
+.badge-outline {
+    border: 1px solid rgba(237, 244, 242, 0.38);
+    color: var(--clr-text-muted);
+}
+.device-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+}
+.notif-card {
+    display: flex;
+    gap: 7px;
+    border-radius: 14px;
+    padding: 7px;
+    border: 1px solid rgba(237, 244, 242, 0.2);
+    background: rgba(0, 0, 0, 0.4);
+    font-size: 0.75rem;
+}
+.notif-card.primary {
+    background: linear-gradient(135deg, rgba(237, 244, 242, 0.16), rgba(0, 0, 0, 0.5));
+}
+.notif-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.notif-icon i {
+    font-size: 0.8rem;
+}
+.notif-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.notif-title {
+    font-weight: 600;
+    color: var(--clr-surface);
+}
+.notif-text {
+    color: var(--clr-text-muted);
+}
+.notif-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.68rem;
+    color: rgba(237, 244, 242, 0.7);
+    margin-top: 2px;
+}
+.pill {
+    border-radius: 999px;
+    padding: 2px 6px;
+}
+.pill-soft {
+    background: rgba(237, 244, 242, 0.12);
+    color: var(--clr-surface);
+}
+.pill-outline {
+    border: 1px solid rgba(237, 244, 242, 0.5);
+}
+.pill i {
+    margin-right: 3px;
+    font-size: 0.7rem;
+}
+.device-footer {
+    margin-top: 8px;
+    padding: 6px 7px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    font-size: 0.7rem;
+    display: flex;
+    justify-content: space-between;
+    color: var(--clr-text-muted);
+}
+.device-footer i {
+    margin-right: 4px;
+}
 
-.footer-inner { display: flex; justify-content: space-between; align-items: start; margin-bottom: 60px; position: relative; z-index: 2; }
-.footer-brand p { color: var(--text-dim); max-width: 300px; font-size: 1.1rem; }
-.footer-links { display: flex; gap: 25px; font-size: 1.8rem; }
-.footer-links a { color: var(--text-dim); transition: 0.3s var(--ease-elastic); }
-.footer-links a:hover { color: var(--accent); transform: translateY(-5px) scale(1.1); filter: drop-shadow(0 0 10px var(--accent)); }
-.footer-bottom { text-align: center; color: var(--text-dim); font-size: 0.9rem; border-top: 1px solid var(--border); padding: 40px 0; opacity: 0.7; }
-
-/* --- ANIMATIONS --- */
-.animate-on-scroll { opacity: 0; transform: translateY(40px) scale(0.98); transition: 1s var(--ease-elastic); }
-.animate-on-scroll.in-view { opacity: 1; transform: translateY(0) scale(1); }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-.fade-in { animation: fadeEffect 0.5s ease-in-out; }
-@keyframes fadeEffect { from { opacity: 0; } to { opacity: 1; } }
-
-/* --- RESPONSIVE --- */
-@media (max-width: 992px) {
-    .feature-tabs { grid-template-columns: 1fr; gap: 40px; }
-    .tabs-list { flex-direction: row; overflow-x: auto; padding-bottom: 20px; }
-    .tab-btn { flex-shrink: 0; padding: 20px; }
-    .tab-display { min-height: auto; padding: 40px 30px; }
-
-    .nav-menu {
-        position: fixed; top: 0; right: -100%; width: 85%; height: 100vh;
-        background: rgba(11, 15, 25, 0.95); backdrop-filter: blur(20px);
-        flex-direction: column; justify-content: center; transition: 0.5s var(--ease-elastic); padding: 40px;
-        font-size: 1.2rem; gap: 40px;
+/* SPONSORS */
+.sponsors {
+    margin-top: 44px;
+}
+.sponsors-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+}
+.eyebrow {
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: rgba(237, 244, 242, 0.7);
+}
+.sponsors h2 {
+    margin-top: 4px;
+    font-size: 1.4rem;
+    font-weight: 650;
+}
+.sponsors-note {
+    max-width: 360px;
+    font-size: 0.9rem;
+    color: var(--clr-text-muted);
+}
+.sponsors-marquee-wrap {
+    margin-top: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(237, 244, 242, 0.22);
+    background: linear-gradient(
+        90deg,
+        rgba(237, 244, 242, 0.08),
+        rgba(49, 71, 58, 0.9),
+        rgba(237, 244, 242, 0.08)
+    );
+    padding: 10px 12px;
+    overflow: hidden;
+}
+.sponsors-strip {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    white-space: nowrap;
+    animation: sponsors-scroll 30s linear infinite;
+}
+.sponsor-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.35);
+    color: var(--clr-text-main);
+    font-size: 0.9rem;
+    border: 1px solid rgba(237, 244, 242, 0.25);
+}
+.sponsor-logo {
+    width: 72px;
+    height: 40px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.5);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sponsor-logo img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.sponsor-label {
+    white-space: nowrap;
+}
+@keyframes sponsors-scroll {
+    0% {
+        transform: translateX(0);
     }
-    .nav-menu.is-open { right: 0; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
-    .hamburger { display: block; z-index: 101; }
-    .hero-title { font-size: 3.5rem; }
-    .sponsors-tilt { transform: rotate(-3deg) scale(1.1); width: 115%; margin-left: -7.5%; }
-    /* Mobilde de footer tilt ayarı */
-    .footer-tilt-wrapper { transform: rotate(3deg) scale(1.1); width: 115%; margin-left: -7.5%; margin-top: -40px; }
-    .role-cards-wrapper { gap: 60px; }
-    .footer-inner { flex-direction: column; gap: 40px; align-items: center; text-align: center; }
+    100% {
+        transform: translateX(-50%);
+    }
 }
-@media (max-width: 768px) {
-    .hero-section { padding: 140px 0 80px; }
-    .btn-xl { width: 100%; justify-content: center; }
-    .hero-cta { flex-direction: column; }
-    .comparison-section { padding: 60px 24px; }
-    .table-card { padding: 30px 20px; }
-    th, td { padding: 15px; }
-    .role-card { width: 100%; max-width: 400px; }
+
+/* FEATURES */
+.features {
+    margin-top: 56px;
+}
+.section-title {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.section-title h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+.section-title p {
+    margin-top: 5px;
+    font-size: 0.97rem;
+    color: var(--clr-text-muted);
+}
+.features-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 24px;
+    align-items: flex-start;
+}
+.features-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+}
+.tab-btn {
+    border-radius: 16px;
+    border: 1px solid rgba(237, 244, 242, 0.25);
+    padding: 9px 11px;
+    display: flex;
+    gap: 11px;
+    background: rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    text-align: left;
+}
+.tab-btn.active {
+    background: rgba(237, 244, 242, 0.08);
+    border-color: rgba(237, 244, 242, 0.5);
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.45);
+}
+.tab-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tab-icon i {
+    font-size: 0.9rem;
+}
+.tab-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.9rem;
+}
+.tab-kicker {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: rgba(237, 244, 242, 0.7);
+}
+.tab-title {
+    font-weight: 600;
+}
+.tab-desc {
+    font-size: 0.8rem;
+    color: var(--clr-text-muted);
+}
+.features-panel {
+    border-radius: 20px;
+    border: 1px solid rgba(237, 244, 242, 0.35);
+    background: rgba(0, 0, 0, 0.35);
+    padding: 15px 18px;
+    min-height: 180px;
+}
+.panel-content h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.panel-content p {
+    font-size: 0.9rem;
+    color: var(--clr-text-muted);
+    margin-bottom: 9px;
+}
+.panel-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.86rem;
+}
+.panel-content li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+.panel-content li i {
+    font-size: 0.75rem;
+}
+
+/* ROLES */
+.roles {
+    margin-top: 56px;
+}
+.role-toggle {
+    margin-top: 12px;
+    display: inline-flex;
+    border-radius: 999px;
+    border: 1px solid rgba(237, 244, 242, 0.25);
+    padding: 2px;
+}
+.role-toggle button {
+    padding: 7px 18px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    color: var(--clr-text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.role-toggle button.active {
+    background: var(--clr-surface);
+    color: var(--clr-bg);
+}
+.roles-grid {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+.role-card {
+    position: relative;
+    border-radius: 20px;
+    border: 1px solid rgba(237, 244, 242, 0.25);
+    background: rgba(0, 0, 0, 0.35);
+    padding: 16px 18px;
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    opacity: 0.78;
+    transform: translateY(4px) scale(0.99);
+    transition:
+        opacity 0.25s,
+        transform 0.25s,
+        box-shadow 0.25s,
+        border-color 0.25s;
+}
+.role-card.active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+    border-color: rgba(237, 244, 242, 0.6);
+}
+.role-card.featured.active {
+    border-color: var(--clr-surface);
+}
+.role-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    background: rgba(237, 244, 242, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.role-icon i {
+    font-size: 1rem;
+}
+.role-card h3 {
+    margin-top: 4px;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+.role-card p {
+    color: var(--clr-text-muted);
+}
+.role-price {
+    margin-top: 5px;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+.role-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0 10px;
+}
+.role-card li {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.role-card li i {
+    font-size: 0.8rem;
+}
+.role-badge {
+    position: absolute;
+    top: -11px;
+    right: 18px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--clr-surface);
+    color: var(--clr-bg);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+/* TESTIMONIALS MARQUEE */
+.testimonials {
+    margin-top: 56px;
+}
+.testimonials-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+}
+.testimonials-head h2 {
+    margin-top: 4px;
+    font-size: 1.4rem;
+    font-weight: 650;
+}
+.testimonials-note {
+    max-width: 380px;
+    font-size: 0.9rem;
+    color: var(--clr-text-muted);
+}
+.testimonials-marquee-wrap {
+    margin-top: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(237, 244, 242, 0.22);
+    background: rgba(0, 0, 0, 0.28);
+    padding: 12px 10px;
+    overflow: hidden;
+}
+.testimonials-strip {
+    display: flex;
+    align-items: stretch;
+    gap: 14px;
+    white-space: nowrap;
+    animation: testimonials-scroll 32s linear infinite;
+}
+.testimonial-chip {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(237, 244, 242, 0.32);
+    min-width: 260px;
+    max-width: 320px;
+    line-height: 1.35;
+}
+.chip-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: var(--clr-surface-soft);
+    color: var(--clr-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+.chip-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-size: 0.86rem;
+    white-space: normal;
+}
+.chip-name {
+    font-weight: 600;
+}
+.chip-role {
+    font-size: 0.75rem;
+    color: var(--clr-text-muted);
+}
+.chip-quote {
+    margin-top: 3px;
+    font-size: 0.8rem;
+    color: var(--clr-text-muted);
+}
+@keyframes testimonials-scroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* FOOTER */
+.footer {
+    border-top: 1px solid rgba(237, 244, 242, 0.18);
+    background: #27362d;
+    margin-top: 40px;
+}
+.footer-inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 18px 16px 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+    gap: 20px;
+    font-size: 0.92rem;
+}
+.footer-col.left p {
+    margin-top: 6px;
+    color: var(--clr-text-muted);
+}
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+.footer-logo .logo-main {
+    font-size: 1.1rem;
+}
+.footer-social {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+.footer-social a {
+    color: var(--clr-text-muted);
+    text-decoration: none;
+    font-size: 1.05rem;
+}
+.footer-social a:hover {
+    color: var(--clr-surface);
+}
+
+/* footer app + qr */
+.footer-top-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 18px;
+}
+.footer-app h3,
+.footer-qr-block h3 {
+    font-size: 1.1rem;
+    font-weight: 650;
+}
+.footer-app p,
+.footer-qr-block p {
+    margin-top: 6px;
+    color: var(--clr-text-muted);
+    font-size: 0.9rem;
+}
+.footer-app-body {
+    margin-top: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.phone-figure {
+    width: 76px;
+    height: 76px;
+    border-radius: 22px;
+    border: 1px solid rgba(237, 244, 242, 0.35);
+    background: radial-gradient(circle at top, #3b5a48, #1b251f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+.app-logo-img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+.store-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.store-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(237, 244, 242, 0.28);
+    padding: 4px 9px;
+    font-size: 0.78rem;
+    background: rgba(0, 0, 0, 0.25);
+}
+.store-badge i {
+    font-size: 0.9rem;
+}
+
+/* footer qr block */
+.footer-qr {
+    margin-top: 8px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.qr-box {
+    width: 88px;
+    height: 88px;
+    border-radius: 12px;
+    border: 1px solid rgba(237, 244, 242, 0.6);
+    background: #edf4f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.qr-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.qr-info {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--clr-text-muted);
+}
+.qr-info li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+.qr-info li i {
+    font-size: 0.78rem;
+}
+
+/* footer bottom */
+.footer-bottom {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 8px 16px 16px;
+    font-size: 0.8rem;
+    color: var(--clr-text-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+.footer-bottom span::after {
+    content: '·';
+    margin-left: 8px;
+}
+.footer-bottom span:last-child::after {
+    content: '';
+    margin: 0;
+}
+
+/* SECTION ANIMATIONS */
+.section-animate {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+    transition:
+        opacity 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
+        transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.section-in-view {
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+}
+
+/* RESPONSIVE */
+.hide-sm {
+    display: inline-flex;
+}
+
+@media (max-width: 960px) {
+    .nav-center,
+    .nav-auth {
+        display: none;
+    }
+    .nav-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .nav-mobile {
+        display: flex;
+    }
+    .hero-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 28px;
+    }
+    .hero-right {
+        order: -1;
+        justify-content: center;
+    }
+    .features-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .roles-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .footer-top-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 720px) {
+    .footer-inner {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .main-wrapper {
+        padding-top: 100px;
+    }
+    .hero-title {
+        font-size: 2rem;
+    }
+    .hero-cta {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .btn-lg {
+        width: 100%;
+    }
+    .hero-secondary {
+        justify-content: center;
+    }
+    .hero-metrics {
+        justify-content: center;
+    }
+    .sponsors-head,
+    .testimonials-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .hide-sm {
+        display: none;
+    }
 }
 </style>

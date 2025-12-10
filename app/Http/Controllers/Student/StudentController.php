@@ -68,14 +68,13 @@ class StudentController extends Controller
                 }
             }
 
-            // --- DEĞİŞİKLİK BURADA ---
-            // back() yerine redirect()->route('dashboard') kullanıyoruz.
+
+
             return redirect()->route('dashboard')
                              ->with('success', 'Öğrenci(ler) başarıyla eklendi!');
 
         } catch (\Exception $e) {
-            // Hata durumunda formda kalması daha iyidir, o yüzden burası back() kalabilir.
-            // Toast mesajı için 'error' key'ini kullanıyoruz.
+
             return back()->with('error', 'Hata oluştu: ' . $e->getMessage());
         }
     }

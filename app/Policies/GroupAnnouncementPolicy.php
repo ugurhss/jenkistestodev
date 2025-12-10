@@ -26,9 +26,12 @@ class GroupAnnouncementPolicy
             return true;
         }
 
+
         if ($user->hasRole('admin')) {
-            return $announcement->group->user_id === $user->id;
+            return $announcement->group
+                && $announcement->group->user_id === $user->id;
         }
+
 
         return false;
     }
