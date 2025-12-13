@@ -66,6 +66,19 @@ pipeline {
         }
       }
     }
+    stage('Docker Up (App+DB)') {
+      steps {
+        sh '''
+          docker compose -f docker-compose.app.yml up -d
+          docker ps
+        '''
+      }
+    }
 
+  }
+  post {
+    always {
+      sh 'docker compose -f docker-compose.app.yml down -v || true'
+    }
   }
 }
