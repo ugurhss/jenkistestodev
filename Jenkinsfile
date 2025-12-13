@@ -16,9 +16,7 @@ pipeline {
 
     stage('Build CI Image') {
       steps {
-        sh '''
-          docker build -t ${CI_IMAGE} -f ci/Dockerfile.ci .
-        '''
+        sh 'docker build -t ${CI_IMAGE} -f ci/Dockerfile.ci .'
       }
     }
 
@@ -26,10 +24,20 @@ pipeline {
       steps {
         sh '''
           docker run --rm \
-            -v "$PWD":/app \
-            -w /app \
+            -v "$PWD":/app -w /app \
             ${CI_IMAGE} \
             composer install --no-interaction --prefer-dist
+        '''
+      }
+    }
+
+    stage('NPM Install & Build') {
+      steps {
+        sh '''
+          docker run --rm \
+            -v "$PWD":/app -w /app \
+            node:20-alpine \
+            sh -lc "npm ci && npm run build"
         '''
       }
     }
