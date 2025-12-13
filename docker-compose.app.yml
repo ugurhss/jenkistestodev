@@ -18,11 +18,18 @@ services:
   app:
     image: laravel-ci-image:latest
     container_name: laravel_app
-    working_dir: /app
+
+    # ✅ ÖNEMLİ: repo'yu '.' ile bind etmek yok!
+    # Jenkins workspace zaten JENKINS_VOL içinde -> onu mount ediyoruz
     volumes:
-      - ./:/app
+      - jenkins-laravel_jenkins_home:/var/jenkins_home
+
+    # ✅ artisan bu path'te duruyor
+    working_dir: /var/jenkins_home/workspace/laravel-ci
+
     ports:
       - "8000:8000"
+
     environment:
       APP_ENV: testing
       APP_DEBUG: "true"
@@ -32,9 +39,12 @@ services:
       DB_DATABASE: laravel
       DB_USERNAME: laravel
       DB_PASSWORD: secret
+
     depends_on:
       db:
         condition: service_healthy
+
+    # ✅ '$' olan yerler compose tarafından yenmesin diye $$ yaptık
     command: >
       sh -lc "
         set -e;
@@ -44,10 +54,12 @@ services:
 
         echo '⏳ DB bağlantısı bekleniyor...';
         until php -r '
-          $host=getenv(\"DB_HOST\"); $db=getenv(\"DB_DATABASE\");
-          $u=getenv(\"DB_USERNAME\"); $p=getenv(\"DB_PASSWORD\");
-          try { new PDO(\"mysql:host=$host;dbname=$db;port=3306\", $u, $p); exit(0); }
-          catch(Exception $e) { exit(1); }
+          $$h=getenv(\"DB_HOST\");
+          $$d=getenv(\"DB_DATABASE\");
+          $$u=getenv(\"DB_USERNAME\");
+          $$p=getenv(\"DB_PASSWORD\");
+          try { new PDO(\"mysql:host=$$h;dbname=$$d;port=3306\", $$u, $$p); exit(0); }
+          catch(Exception $$e) { exit(1); }
         '; do
           sleep 2;
         done;
@@ -58,8 +70,14 @@ services:
 
         php artisan serve --host=0.0.0.0 --port=8000
       "
+
     healthcheck:
-      test: [ "CMD", "sh", "-lc", "wget -qO- http://127.0.0.1:8000/ >/dev/null 2>&1" ]
+      test: [ "CMD-SHELL", "wget -qO- http://127.0.0.1:8000/ >/dev/null 2>&1 || exit 1" ]
       interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 60
+      start_period: 20s
+
+volumes:
+  jenkins-laravel_jenkins_home:
+    external: true

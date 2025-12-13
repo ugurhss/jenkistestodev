@@ -3,9 +3,9 @@ pipeline {
   options { timestamps() }
 
   environment {
-    CI_IMAGE     = "laravel-ci-image:latest"
-    JENKINS_VOL  = "jenkins-laravel_jenkins_home"
-    WS           = "/var/jenkins_home/workspace/laravel-ci"
+    CI_IMAGE    = "laravel-ci-image:latest"
+    JENKINS_VOL = "jenkins-laravel_jenkins_home"
+    WS          = "/var/jenkins_home/workspace/laravel-ci"
   }
 
   stages {
@@ -15,9 +15,7 @@ pipeline {
         checkout scm
         sh 'pwd'
         sh 'ls -la'
-        sh 'test -f composer.json && echo "✅ composer.json var" || (echo "❌ composer.json yok" && exit 1)'
-        sh 'test -f docker-compose.app.yml && echo "✅ docker-compose.app.yml var" || (echo "❌ docker-compose.app.yml yok" && exit 1)'
-        sh 'test -d ci && echo "✅ ci klasörü var" || (echo "❌ ci klasörü yok" && exit 1)'
+        sh 'test -f docker-compose.app.yml && echo "✅ docker-compose.app.yml var" || (echo "❌ yok" && exit 1)'
       }
     }
 
@@ -80,39 +78,33 @@ pipeline {
 
           echo "⏳ DB healthy bekleniyor..."
           for i in $(seq 1 30); do
-            STATUS=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' laravel_db 2>/dev/null || true)
+            STATUS=$(docker inspect -f '{{.State.Health.Status}}' laravel_db 2>/dev/null || true)
             echo "DB status: $STATUS"
-            if [ "$STATUS" = "healthy" ]; then
-              echo "✅ DB healthy"
-              break
-            fi
+            [ "$STATUS" = "healthy" ] && break
             sleep 5
           done
 
-          echo "⏳ APP running + healthy bekleniyor..."
-          for i in $(seq 1 30); do
-            RUNNING=$(docker inspect -f '{{.State.Running}}' laravel_app 2>/dev/null || echo "false")
-            HEALTH=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' laravel_app 2>/dev/null || echo "no")
-            echo "APP running: $RUNNING | health: $HEALTH"
-            if [ "$RUNNING" = "true" ] && { [ "$HEALTH" = "healthy" ] || [ "$HEALTH" = "no-healthcheck" ]; }; then
-              echo "✅ APP ayakta"
+          echo "⏳ APP healthy bekleniyor..."
+          for i in $(seq 1 60); do
+            RUNNING=$(docker inspect -f '{{.State.Running}}' laravel_app 2>/dev/null || echo false)
+            HEALTH=$(docker inspect -f '{{.State.Health.Status}}' laravel_app 2>/dev/null || echo starting)
+            echo "APP running=$RUNNING | health=$HEALTH ($i/60)"
+
+            if [ "$RUNNING" = "true" ] && [ "$HEALTH" = "healthy" ]; then
+              echo "✅ APP healthy"
               break
             fi
+
+            if [ "$i" -eq 15 ]; then
+              echo "📌 laravel_app logs (tail 80)"
+              docker logs laravel_app --tail=80 || true
+            fi
+
             sleep 5
           done
 
-          echo "📌 docker ps"
-          docker ps
-
-          echo "📌 docker-compose ps"
-          docker-compose -f docker-compose.app.yml ps
-
-          # Eğer app ayakta değilse: log bas ve pipeline fail
-          if ! docker ps --format '{{.Names}}' | grep -q '^laravel_app$'; then
-            echo "❌ laravel_app ayakta değil. Loglar:"
-            docker logs laravel_app --tail=200 || true
-            exit 1
-          fi
+          FINAL=$(docker inspect -f '{{.State.Health.Status}}' laravel_app 2>/dev/null || echo fail)
+          [ "$FINAL" = "healthy" ] || exit 1
 
           echo "✅ Docker ortamı hazır"
         '''
@@ -123,7 +115,8 @@ pipeline {
       steps {
         sh '''
           docker exec laravel_app sh -lc "
-            mkdir -p storage/test-results &&
+            cd /var/jenkins_home/workspace/laravel-ci
+            mkdir -p storage/test-results
             php artisan test --testsuite=Feature --log-junit storage/test-results/junit-feature.xml
           "
         '''
@@ -138,24 +131,8 @@ pipeline {
     stage('E2E Scenarios (3 HTTP checks)') {
       steps {
         sh '''
-          echo "⏳ HTTP hazır mı?"
-          for i in $(seq 1 30); do
-            if docker exec laravel_app sh -lc "wget -qO- http://127.0.0.1:8000/ >/dev/null 2>&1"; then
-              echo "✅ APP HTTP cevap veriyor"
-              break
-            fi
-            echo "bekleniyor..."
-            sleep 3
-          done
-
-          echo "✅ Senaryo 1: Home page 200"
           docker exec laravel_app sh -lc "wget -qO- http://127.0.0.1:8000/ >/dev/null"
-
-          echo "✅ Senaryo 2: Login sayfası erişilebilir mi? (Breeze varsa /login)"
           docker exec laravel_app sh -lc "wget -qO- http://127.0.0.1:8000/login >/dev/null"
-
-          echo "✅ Senaryo 3: Groups index (auth gerekebilir) - burada sadece route var mı kontrol edelim"
-          # Eğer /groups auth istiyorsa 302 döner; wget yine de HTML alır.
           docker exec laravel_app sh -lc "wget -qO- http://127.0.0.1:8000/groups >/dev/null"
         '''
       }
