@@ -5,11 +5,10 @@ pipeline {
   environment {
     CI_IMAGE = "laravel-ci-image:latest"
 
-    // Jenkins HOME volume adı (senin docker ps / compose kurulumuna göre)
-    // Eğer volume adın farklıysa: docker volume ls ile bakıp bunu güncelle.
+    // Jenkins HOME Docker volume adı (senin setup)
     JENKINS_VOL = "jenkins-laravel_jenkins_home"
 
-    // Jenkins container içindeki workspace yolu (SCM checkout burada)
+    // Jenkins container içindeki workspace (Job adı: laravel-ci)
     WS = "/var/jenkins_home/workspace/laravel-ci"
 
     // Her build için ayrı compose projesi
@@ -22,6 +21,7 @@ pipeline {
       steps {
         sh '''
           set -e
+          echo "== Checkout Debug =="
           pwd
           ls -la
 
@@ -29,10 +29,10 @@ pipeline {
           test -f docker-compose.app.yml && echo "✅ docker-compose.app.yml var" || (echo "❌ docker-compose.app.yml yok" && exit 1)
           test -f ci/Dockerfile.ci && echo "✅ ci/Dockerfile.ci var" || (echo "❌ ci/Dockerfile.ci yok" && exit 1)
 
-          echo "Docker kontrol:"
+          echo "== Docker version =="
           docker version
 
-          echo "Compose kontrol:"
+          echo "== Compose version =="
           docker compose version || docker-compose version
         '''
       }
@@ -42,6 +42,7 @@ pipeline {
       steps {
         sh '''
           set -e
+          echo "== Build CI Image =="
           docker build -t ${CI_IMAGE} -f ci/Dockerfile.ci .
         '''
       }
@@ -51,11 +52,12 @@ pipeline {
       steps {
         sh '''
           set -e
+          echo "== Composer Install =="
           docker run --rm \
             -v ${JENKINS_VOL}:/var/jenkins_home \
             -w ${WS} \
             ${CI_IMAGE} \
-            composer install --no-interaction --prefer-dist
+            sh -lc "pwd && ls -la && composer install --no-interaction --prefer-dist"
         '''
       }
     }
@@ -64,11 +66,12 @@ pipeline {
       steps {
         sh '''
           set -e
+          echo "== NPM Install & Build =="
           docker run --rm \
             -v ${JENKINS_VOL}:/var/jenkins_home \
             -w ${WS} \
             node:20-alpine \
-            sh -lc "npm ci && npm run build"
+            sh -lc "pwd && ls -la && npm ci && npm run build"
         '''
       }
     }
@@ -77,6 +80,7 @@ pipeline {
       steps {
         sh '''
           set -e
+          echo "== Unit Tests =="
           docker run --rm \
             -v ${JENKINS_VOL}:/var/jenkins_home \
             -w ${WS} \
@@ -100,17 +104,34 @@ pipeline {
       steps {
         sh '''
           set -e
+          echo "== Docker Up (App+DB) =="
 
+          cd ${WS}
+          echo "PWD=$(pwd)"
+          ls -la docker-compose.app.yml
+
+          echo "-> compose up"
           docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml up -d
 
-          echo "Servisler:"
-          docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps
+          echo "-> compose ps"
+          docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
 
-          DB_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q db)
-          APP_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app)
+          DB_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q db || true)
+          APP_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app || true)
 
           echo "DB_CID=$DB_CID"
           echo "APP_CID=$APP_CID"
+
+          echo "-> docker ps (host)"
+          docker ps || true
+
+          # DB yoksa direkt fail + log
+          if [ -z "$DB_CID" ]; then
+            echo "❌ DB container bulunamadı."
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs db --tail=200 || true
+            exit 1
+          fi
 
           echo "⏳ DB health bekleniyor..."
           for i in $(seq 1 60); do
@@ -120,6 +141,18 @@ pipeline {
             sleep 5
           done
 
+          # APP yoksa log bas ve fail (app crash olmuştur)
+          if [ -z "$APP_CID" ]; then
+            echo "❌ APP container bulunamadı (muhtemelen crash)."
+            echo "---- compose ps ----"
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
+            echo "---- compose logs (app) ----"
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs app --tail=200 || true
+            echo "---- compose logs (db) ----"
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs db --tail=200 || true
+            exit 1
+          fi
+
           echo "⏳ APP health bekleniyor..."
           for i in $(seq 1 60); do
             AHS=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' "$APP_CID" 2>/dev/null || true)
@@ -128,7 +161,33 @@ pipeline {
             sleep 5
           done
 
-          docker ps
+          echo "== HEALTHCHECK SON DURUM =="
+          docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
+        '''
+      }
+    }
+
+    stage('DB Migrate (Controlled)') {
+      steps {
+        sh '''
+          set -e
+          echo "== DB Migrate (Controlled) =="
+
+          cd ${WS}
+          APP_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app || true)
+
+          if [ -z "$APP_CID" ]; then
+            echo "❌ Migration öncesi APP container yok."
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs app --tail=200 || true
+            exit 1
+          fi
+
+          echo "-> migrate:fresh"
+          docker exec "$APP_CID" sh -lc "
+            cd /app
+            php artisan migrate:fresh --force
+          "
         '''
       }
     }
@@ -137,8 +196,17 @@ pipeline {
       steps {
         sh '''
           set -e
+          echo "== Integration Tests (Feature) =="
 
-          APP_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app)
+          cd ${WS}
+          APP_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app || true)
+
+          if [ -z "$APP_CID" ]; then
+            echo "❌ Feature test öncesi APP container yok."
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs app --tail=200 || true
+            exit 1
+          fi
 
           docker exec "$APP_CID" sh -lc "
             cd /app
@@ -179,8 +247,19 @@ EOF
       steps {
         sh '''
           set -e
-          APP_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app)
+          echo "== E2E Scenarios (3 HTTP checks) =="
 
+          cd ${WS}
+          APP_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app || true)
+
+          if [ -z "$APP_CID" ]; then
+            echo "❌ E2E öncesi APP container yok."
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs app --tail=200 || true
+            exit 1
+          fi
+
+          # container içinden localhost’a 3 senaryo
           docker exec "$APP_CID" sh -lc "php -r 'exit(@file_get_contents(\"http://127.0.0.1:8000\")===false);'"
           docker exec "$APP_CID" sh -lc "php -r 'exit(@file_get_contents(\"http://127.0.0.1:8000/login\")===false);'"
           docker exec "$APP_CID" sh -lc "php -r 'exit(@file_get_contents(\"http://127.0.0.1:8000/register\")===false);'"
@@ -194,6 +273,11 @@ EOF
   post {
     always {
       sh '''
+        echo "== Post: Cleanup =="
+        cd ${WS} || true
+        docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
+        docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs app --tail=120 || true
+        docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs db --tail=120 || true
         docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml down -v || true
       '''
     }
