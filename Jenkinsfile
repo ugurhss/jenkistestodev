@@ -109,6 +109,7 @@ pipeline {
           cd ${WS}
           echo "PWD=$(pwd)"
           ls -la docker-compose.app.yml
+          # Jenkins volume içindeki gerçek host path'i bulup compose'a APP_SOURCE olarak iletiyoruz
           HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}')
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE
@@ -138,11 +139,12 @@ pipeline {
           fi
 
           echo "⏳ DB health bekleniyor..."
+          # 5 saniyelik bekleme yerine 2 saniye ile daha hızlı feedback alıyoruz
           for i in $(seq 1 60); do
             STATUS=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' "$DB_CID" 2>/dev/null || true)
             echo "DB health: $STATUS"
             [ "$STATUS" = "healthy" ] && break
-            sleep 5
+            sleep 2
           done
 
           # APP yoksa log bas ve fail (app crash olmuştur)
@@ -158,11 +160,12 @@ pipeline {
           fi
 
           echo "⏳ APP health bekleniyor..."
+          # APP sağlığı için de bekleme süresi 2 saniyeye indirildi
           for i in $(seq 1 60); do
             AHS=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' "$APP_CID" 2>/dev/null || true)
             echo "APP health: $AHS"
             [ "$AHS" = "healthy" ] && break
-            sleep 5
+            sleep 2
           done
 
           echo "== HEALTHCHECK SON DURUM =="
@@ -178,6 +181,7 @@ pipeline {
           echo "== DB Migrate (Controlled) =="
 
           cd ${WS}
+          # Compose çağrılarında aynı host path'ini tekrar export ediyoruz
           HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}')
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE
@@ -207,6 +211,7 @@ pipeline {
           echo "== Integration Tests (Feature) =="
 
           cd ${WS}
+          # APP_SOURCE olmadan container içinde proje dosyaları bulunamıyor
           HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}')
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE
@@ -262,6 +267,7 @@ EOF
           echo "== E2E Scenarios (3 HTTP checks) =="
 
           cd ${WS}
+          # E2E öncesinde de aynı mount ayarı gerekli
           HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}')
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE
@@ -275,10 +281,28 @@ EOF
             exit 1
           fi
 
-          # container içinden localhost’a 3 senaryo
-          docker exec "$APP_CID" sh -lc "php -r 'exit(@file_get_contents(\"http://127.0.0.1:8000\")===false);'"
-          docker exec "$APP_CID" sh -lc "php -r 'exit(@file_get_contents(\"http://127.0.0.1:8000/login\")===false);'"
-          docker exec "$APP_CID" sh -lc "php -r 'exit(@file_get_contents(\"http://127.0.0.1:8000/register\")===false);'"
+          # container içinden localhost’a 3 senaryo (tek PHP scripti ile)
+          docker exec "$APP_CID" sh -lc '
+            set -e
+            cat <<'\''EOF'\'' > /tmp/http-check.php
+<?php
+$urls = explode(" ", trim(getenv("CHECK_URLS") ?: ""));
+if (!$urls) {
+    fwrite(STDERR, "No URLs provided for health check\n");
+    exit(1);
+}
+foreach ($urls as $url) {
+    if ($url === "") continue;
+    fwrite(STDOUT, "Checking $url ... ");
+    if (@file_get_contents($url) === false) {
+        fwrite(STDOUT, "FAILED\n");
+        exit(1);
+    }
+    fwrite(STDOUT, "OK\n");
+}
+EOF
+            CHECK_URLS="http://127.0.0.1:8000 http://127.0.0.1:8000/login http://127.0.0.1:8000/register" php /tmp/http-check.php
+          '
 
           echo "✅ E2E 3 HTTP senaryosu geçti"
         '''
@@ -292,6 +316,7 @@ EOF
         echo "== Post: Cleanup =="
         cd ${WS} || true
         if docker volume inspect ${JENKINS_VOL} >/dev/null 2>&1; then
+          # Cleanup sırasında bile APP_SOURCE'ı host path'i ile senkron tut
           HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}')
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE

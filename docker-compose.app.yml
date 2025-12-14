@@ -3,6 +3,7 @@ services:
     image: laravel-ci-image:latest
     working_dir: /app
     volumes:
+      # APP_SOURCE Jenkins pipeline'da host workspace'ini geçirir, lokalde . varsayılan kalır
       - ${APP_SOURCE:-.}:/app
     ports:
       - "8000:8000"
