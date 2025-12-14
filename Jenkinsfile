@@ -5,11 +5,15 @@ pipeline {
   environment {
     CI_IMAGE = "laravel-ci-image:latest"
 
-    // Her build için ayrı compose projesi -> çakışma bitiyor
-    COMPOSE_PROJECT_NAME = "laravelci-${BUILD_NUMBER}"
+    // Jenkins HOME volume adı (senin docker ps / compose kurulumuna göre)
+    // Eğer volume adın farklıysa: docker volume ls ile bakıp bunu güncelle.
+    JENKINS_VOL = "jenkins-laravel_jenkins_home"
 
-    // Jenkins workspace yolu (jenkins container içinde genelde budur)
-    WS = "${WORKSPACE}"
+    // Jenkins container içindeki workspace yolu (SCM checkout burada)
+    WS = "/var/jenkins_home/workspace/laravel-ci"
+
+    // Her build için ayrı compose projesi
+    COMPOSE_PROJECT_NAME = "laravelci-${BUILD_NUMBER}"
   }
 
   stages {
@@ -27,8 +31,9 @@ pipeline {
 
           echo "Docker kontrol:"
           docker version
+
           echo "Compose kontrol:"
-          docker-compose version
+          docker compose version || docker-compose version
         '''
       }
     }
@@ -47,8 +52,8 @@ pipeline {
         sh '''
           set -e
           docker run --rm \
-            -v "${WS}:/app" \
-            -w /app \
+            -v ${JENKINS_VOL}:/var/jenkins_home \
+            -w ${WS} \
             ${CI_IMAGE} \
             composer install --no-interaction --prefer-dist
         '''
@@ -60,8 +65,8 @@ pipeline {
         sh '''
           set -e
           docker run --rm \
-            -v "${WS}:/app" \
-            -w /app \
+            -v ${JENKINS_VOL}:/var/jenkins_home \
+            -w ${WS} \
             node:20-alpine \
             sh -lc "npm ci && npm run build"
         '''
@@ -73,8 +78,8 @@ pipeline {
         sh '''
           set -e
           docker run --rm \
-            -v "${WS}:/app" \
-            -w /app \
+            -v ${JENKINS_VOL}:/var/jenkins_home \
+            -w ${WS} \
             ${CI_IMAGE} \
             sh -lc "
               cp -n .env.example .env || true
@@ -96,15 +101,13 @@ pipeline {
         sh '''
           set -e
 
-          # Up
-          docker-compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml up -d
+          docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml up -d
 
           echo "Servisler:"
-          docker-compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps
+          docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps
 
-          # Container ID’lerini sağlam şekilde al
-          DB_CID=$(docker-compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q db)
-          APP_CID=$(docker-compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app)
+          DB_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q db)
+          APP_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app)
 
           echo "DB_CID=$DB_CID"
           echo "APP_CID=$APP_CID"
@@ -135,7 +138,7 @@ pipeline {
         sh '''
           set -e
 
-          APP_CID=$(docker-compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app)
+          APP_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app)
 
           docker exec "$APP_CID" sh -lc "
             cd /app
@@ -176,9 +179,8 @@ EOF
       steps {
         sh '''
           set -e
-          APP_CID=$(docker-compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app)
+          APP_CID=$(docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps -q app)
 
-          # container içinden localhost’a istek atıyoruz
           docker exec "$APP_CID" sh -lc "php -r 'exit(@file_get_contents(\"http://127.0.0.1:8000\")===false);'"
           docker exec "$APP_CID" sh -lc "php -r 'exit(@file_get_contents(\"http://127.0.0.1:8000/login\")===false);'"
           docker exec "$APP_CID" sh -lc "php -r 'exit(@file_get_contents(\"http://127.0.0.1:8000/register\")===false);'"
@@ -192,7 +194,7 @@ EOF
   post {
     always {
       sh '''
-        docker-compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml down -v || true
+        docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml down -v || true
       '''
     }
   }
