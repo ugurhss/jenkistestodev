@@ -282,9 +282,9 @@ EOF
           fi
 
           # container içinden localhost’a 3 senaryo (tek PHP scripti ile)
-          docker exec "$APP_CID" sh -lc '
+          docker exec "$APP_CID" sh -lc "
             set -e
-            cat <<'\''EOF'\'' > /tmp/http-check.php
+            cat <<'PHP' > /tmp/http-check.php
 <?php
 $urls = explode(" ", trim(getenv("CHECK_URLS") ?: ""));
 if (!$urls) {
@@ -300,9 +300,9 @@ foreach ($urls as $url) {
     }
     fwrite(STDOUT, "OK\n");
 }
-EOF
-            CHECK_URLS="http://127.0.0.1:8000 http://127.0.0.1:8000/login http://127.0.0.1:8000/register" php /tmp/http-check.php
-          '
+PHP
+            CHECK_URLS=\"http://127.0.0.1:8000 http://127.0.0.1:8000/login http://127.0.0.1:8000/register\" php /tmp/http-check.php
+          "
 
           echo "✅ E2E 3 HTTP senaryosu geçti"
         '''
