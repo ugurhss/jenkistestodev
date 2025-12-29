@@ -8,7 +8,7 @@ use App\Services\Activity\ActivityLogService;
 use App\Services\Group\GroupService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
-use Tests\TestCase; // ✅ PHPUnit değil!
+use Tests\TestCase;
 
 class GroupServiceTest extends TestCase
 {

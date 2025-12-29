@@ -7,8 +7,10 @@ use App\Http\Controllers\Group\GroupController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Student\StudentController;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
 
 
 
@@ -80,3 +82,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('students.sample.excel');
 
 require __DIR__.'/auth.php';
+
+
+Route::get('/telegram-test', function () {
+    $token = config('services.telegram.bot_token');
+    $chatId = config('services.telegram.chat_id');
+
+    $res = Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+        'chat_id' => $chatId,
+        'text' => '✅ Laravel Telegram test mesajı',
+    ]);
+
+    return $res->json();
+});

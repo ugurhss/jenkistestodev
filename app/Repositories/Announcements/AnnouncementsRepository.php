@@ -9,7 +9,7 @@ class AnnouncementsRepository
 {
     public function getPaginated(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = GroupAnnouncement::with(['group.user', 'user'])
+        $query = GroupAnnouncement::with(['group.user', 'user', 'attachments'])
             ->orderByDesc('created_at');
 
         if (!empty($filters['search'])) {
@@ -38,7 +38,7 @@ class AnnouncementsRepository
 
     public function findById(int $id): ?GroupAnnouncement
     {
-        return GroupAnnouncement::with(['group.user', 'user'])->find($id);
+        return GroupAnnouncement::with(['group.user', 'user', 'attachments'])->find($id);
     }
 
     public function update(int $id, array $data): ?GroupAnnouncement

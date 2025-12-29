@@ -2,9 +2,14 @@
 
 namespace App\Providers;
 
+use App\Services\Announcements\Adapters\DocumentAttachmentAdapter;
+use App\Services\Announcements\Adapters\ImageAttachmentAdapter;
+use App\Services\Announcements\AnnouncementAttachmentManager;
+use App\Welcome\Contracts\WelcomeMessageFactory;
+use App\Welcome\Factories\DefaultWelcomeMessageFactory;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
@@ -14,7 +19,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(WelcomeMessageFactory::class, DefaultWelcomeMessageFactory::class);
+
+        $this->app->bind(ImageAttachmentAdapter::class, fn () => new ImageAttachmentAdapter());
+        $this->app->bind(DocumentAttachmentAdapter::class, fn () => new DocumentAttachmentAdapter());
+
+        $this->app->singleton(AnnouncementAttachmentManager::class, function ($app) {
+            return new AnnouncementAttachmentManager([
+                $app->make(ImageAttachmentAdapter::class),
+                $app->make(DocumentAttachmentAdapter::class),
+            ]);
+        });
     }
 
     /**

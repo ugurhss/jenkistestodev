@@ -20,6 +20,35 @@
 
         <div class="py-12">
             <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+                <div v-if="announcement.attachments?.length" class="mb-6 bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7L14 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3v4h4" />
+                        </svg>
+                        Eklenmiş Dosyalar
+                    </h3>
+                    <div class="space-y-3">
+                        <div
+                            v-for="attachment in announcement.attachments"
+                            :key="attachment.id"
+                            class="flex items-center justify-between px-4 py-3 border border-dashed border-gray-200 rounded-2xl"
+                        >
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">{{ attachment.original_name }}</p>
+                                <p class="text-xs text-gray-500">{{ attachment.mime_type }} · {{ formatAttachmentSize(attachment.size) }}</p>
+                            </div>
+                            <a
+                                :href="attachment.url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="text-xs text-indigo-600 font-semibold"
+                            >
+                                İndir
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <form @submit.prevent="submit" class="p-6">
                         <!-- Grup Seçimi -->
@@ -127,5 +156,17 @@ const form = useForm({
 // Submit
 const submit = () => {
     form.put(route('announcements.update', props.announcement.id));
+};
+
+const formatAttachmentSize = (size) => {
+    if (!size) {
+        return '0 KB';
+    }
+
+    if (size < 1024) {
+        return `${size} B`;
+    }
+
+    return `${(size / 1024).toFixed(1)} KB`;
 };
 </script>

@@ -126,8 +126,8 @@
                                     </div>
 
                                     <!-- Meta Bilgiler -->
-                                    <div class="mt-4 flex items-center space-x-3 flex-wrap gap-3 text-sm text-gray-500">
-                                        <span class="inline-flex items-center">
+                                        <div class="mt-4 flex items-center space-x-3 flex-wrap gap-3 text-sm text-gray-500">
+                                            <span class="inline-flex items-center">
                                             <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2m2 2a2 2 0 002-2m-2 2v-6a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2m0 0h0" />
                                             </svg>
@@ -146,9 +146,34 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                             {{ formatDate(announcement.created_at) }}
-                                        </span>
+                                            </span>
+                                        </div>
+                                        <div v-if="announcement.attachments?.length" class="mt-4">
+                                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2 flex items-center gap-1">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7L14 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3v4h4" />
+                                                </svg>
+                                                Ekler
+                                            </p>
+                                            <div class="flex flex-wrap gap-2">
+                                                <a
+                                                    v-for="attachment in announcement.attachments"
+                                                    :key="attachment.id"
+                                                    :href="attachment.url"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 hover:bg-white transition text-xs text-gray-600 font-semibold shadow-sm"
+                                                >
+                                                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15h2M12 5v10" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 3h9l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                                                    </svg>
+                                                    <span>{{ attachment.original_name }}</span>
+                                                </a>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
 
                                 <!-- Aksiyonlar -->
                                 <div class="flex items-center space-x-2 flex-shrink-0">

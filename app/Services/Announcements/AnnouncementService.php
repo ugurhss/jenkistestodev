@@ -5,23 +5,27 @@ namespace App\Services\Announcements;
 use App\Models\Group;
 use App\Repositories\Announcements\AnnouncementsRepository;
 use App\Services\Activity\ActivityLogService;
+use App\Services\Announcements\AnnouncementAttachmentManager;
 use App\Services\Group\GroupService;
 use Illuminate\Http\Request;
 
 class AnnouncementService
 {
-     protected AnnouncementsRepository $announcementRepo;
+    protected AnnouncementsRepository $announcementRepo;
     protected GroupService $groupService;
     protected ActivityLogService $activityLogService;
+    protected AnnouncementAttachmentManager $attachmentManager;
 
     public function __construct(
         AnnouncementsRepository $announcementRepo,
         GroupService $groupService,
-        ActivityLogService $activityLogService
+        ActivityLogService $activityLogService,
+        AnnouncementAttachmentManager $attachmentManager
     ) {
         $this->announcementRepo   = $announcementRepo;
         $this->groupService       = $groupService;
         $this->activityLogService = $activityLogService;
+        $this->attachmentManager = $attachmentManager;
     }
 
     public function getIndexData($user, Request $request)
@@ -55,7 +59,7 @@ class AnnouncementService
     }
 
 
- public function createWithRelations(array $data, $user)
+    public function createWithRelations(array $data, $user)
     {
         $group = Group::findOrFail($data['group_id']);
 
@@ -63,10 +67,17 @@ class AnnouncementService
 
         $data['user_id'] = $user->id;
 
+        $files = $data['attachments'] ?? [];
+        unset($data['attachments']);
+
         $announcement = $this->announcementRepo->create($data);
 
         // Log
         $this->activityLogService->logAnnouncementCreated($announcement, $user);
+
+        if (! empty($files)) {
+            $this->attachmentManager->storeAttachments($files, $announcement);
+        }
 
         return $announcement;
     }

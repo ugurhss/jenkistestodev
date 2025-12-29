@@ -30,4 +30,9 @@ class GroupAnnouncement extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function attachments()
+    {
+        return $this->hasMany(GroupAnnouncementAttachment::class, 'group_announcement_id');
+    }
 }

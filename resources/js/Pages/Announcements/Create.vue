@@ -83,6 +83,34 @@
                             </div>
                         </div>
 
+                        <!-- Dosya ekleme -->
+                        <div class="mb-6">
+                            <label for="attachments" class="block text-sm font-medium text-gray-700 mb-2">
+                                Dosyalar
+                            </label>
+                            <input
+                                id="attachments"
+                                type="file"
+                                multiple
+                                @change="handleAttachmentsChange"
+                                class="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm"
+                            />
+                            <p class="mt-1 text-sm text-gray-500">
+                                Resim, PDF, Word veya Excel dosyalarını yükleyebilirsiniz. Maksimum 20MB.
+                            </p>
+                            <div v-if="selectedFiles.length" class="mt-2 text-sm text-gray-600">
+                                <p v-for="file in selectedFiles" :key="file.name">
+                                    {{ file.name }} ({{ Math.round(file.size / 1024) }} KB)
+                                </p>
+                            </div>
+                            <div v-if="form.errors.attachments" class="mt-1 text-sm text-red-600">
+                                {{ form.errors.attachments }}
+                            </div>
+                            <div v-if="form.errors['attachments.0']" class="mt-1 text-sm text-red-600">
+                                {{ form.errors['attachments.0'] }}
+                            </div>
+                        </div>
+
                         <!-- Butonlar -->
                         <div class="flex items-center justify-end space-x-3">
                             <Link
@@ -115,6 +143,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import FormErrorModal from '@/Components/FormErrorModal.vue';
+import { ref } from 'vue';
 
 // Props
 const props = defineProps({
@@ -125,8 +154,17 @@ const props = defineProps({
 const form = useForm({
     group_id: '',
     title: '',
-    content: ''
+    content: '',
+    attachments: []
 });
+
+const selectedFiles = ref([]);
+
+const handleAttachmentsChange = (event) => {
+    const files = Array.from(event.target.files);
+    selectedFiles.value = files;
+    form.attachments = files;
+};
 
 // Submit
 const submit = () => {

@@ -17,6 +17,8 @@ class StoreAnnouncementRequest extends FormRequest
             'group_id' => 'required|exists:groups,id',
             'title'    => 'required|string|max:255',
             'content'  => 'required|string',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|max:20480|mimes:jpeg,jpg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv',
         ];
     }
 
@@ -28,6 +30,9 @@ class StoreAnnouncementRequest extends FormRequest
             'title.required'    => 'Başlık zorunludur.',
             'title.max'         => 'Başlık en fazla 255 karakter olabilir.',
             'content.required'  => 'İçerik zorunludur.',
+            'attachments.*.file' => 'Yüklenen dosya geçerli değil.',
+            'attachments.*.mimes' => 'Desteklenmeyen dosya tipi. (jpg, png, gif, webp, pdf, doc, docx, xls, xlsx, csv)',
+            'attachments.*.max' => 'Dosya boyutu 20MB\'ı aşamaz.',
         ];
     }
 }

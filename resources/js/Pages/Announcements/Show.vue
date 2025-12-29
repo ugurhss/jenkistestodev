@@ -108,6 +108,42 @@
                             </div>
                         </div>
 
+                        <!-- Ekler -->
+                        <div v-if="announcement.attachments?.length" class="mt-8 bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2 text-sm text-gray-500 uppercase tracking-wide">
+                                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V7L14 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3v4h4" />
+                                    </svg>
+                                    Ekler
+                                </div>
+                                <span class="text-xs text-gray-400">{{ announcement.attachments.length }} dosya</span>
+                            </div>
+                            <div class="grid gap-3">
+                                <a
+                                    v-for="attachment in announcement.attachments"
+                                    :key="attachment.id"
+                                    :href="attachment.url"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="flex justify-between items-center px-4 py-3 border border-dashed border-gray-200 rounded-2xl hover:border-indigo-300 transition"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15h2M12 5v10" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 3h9l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm font-semibold text-gray-800">{{ attachment.original_name }}</p>
+                                            <p class="text-xs text-gray-500">{{ attachment.mime_type }} · {{ formatAttachmentSize(attachment.size) }}</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-semibold text-indigo-600">İndir</span>
+                                </a>
+                            </div>
+                        </div>
+
                         <!-- Güncelleme Bilgisi -->
                         <div v-if="announcement.updated_at !== announcement.created_at" class="mt-8 pt-6 border-t border-gray-200">
                             <p class="text-xs text-gray-500 flex items-center">
@@ -185,5 +221,17 @@ const formatDate = (date) => {
         hour: '2-digit',
         minute: '2-digit'
     });
+};
+
+const formatAttachmentSize = (size) => {
+    if (!size) {
+        return '0 KB';
+    }
+
+    if (size < 1024) {
+        return `${size} B`;
+    }
+
+    return `${(size / 1024).toFixed(1)} KB`;
 };
 </script>

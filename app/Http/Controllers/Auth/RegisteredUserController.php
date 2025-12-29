@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Jobs\SendWelcomeNotifications;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -34,6 +35,8 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
              'no' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+                'phone' => ['nullable', 'string', 'max:30'],
+
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -42,11 +45,16 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'no' => $request->no,
+                'phone' => $request->phone,
+
         ]);
                         $user->assignRole('admin');
         event(new Registered($user));
 
         Auth::login($user);
+
+        // Yeni kullanıcı için hoş geldin işini kuyruğa al.
+        SendWelcomeNotifications::dispatch($user);
 
         return redirect(route('dashboard', absolute: false));
     }
