@@ -32,8 +32,27 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /**
-     * Bootstrap any application services.
+    /**Browser
+ ↓
+public/index.php
+ ↓
+bootstrap/app.php
+ ↓
+HTTP Kernel
+ ↓
+Service Providers (register)
+ ↓
+Service Providers (boot)
+ ↓
+Middleware
+ ↓
+Routes
+ ↓
+Controller
+ ↓
+Service / Business Logic
+ ↓
+Response
      */
     public function boot(): void
     {

@@ -8,13 +8,13 @@ class StudentImporterFactory
 {
     public static function make(string $type): StudentImporterInterface
     {
-        $service = app(StudentService::class);
+        $service = app(StudentService::class); //singelton
 
         return match ($type) {
             'manual' => new ManualStudentImporter($service),
             'csv' => new CsvStudentImporter($service),
             'excel' => new ExcelStudentImporter($service),
-            default => throw new \Exception("Invalid import type: $type")
+            default => throw new \Exception("gecersiz tip: $type")
         };
     }
 }

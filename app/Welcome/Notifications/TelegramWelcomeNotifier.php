@@ -16,7 +16,7 @@ class TelegramWelcomeNotifier implements WelcomeNotifier
         $chatId = config('services.telegram.chat_id');
 
         if (! $token || ! $chatId) {
-            Log::warning('step 1 send');
+            Log::warning('step 1 send. devam token hata');
             return;
         }
 
@@ -28,7 +28,7 @@ class TelegramWelcomeNotifier implements WelcomeNotifier
         ]);
 
         if ($response->failed()) {
-            Log::warning('step-2 send', [
+            Log::warning('step-2 send hatalar', [
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);

@@ -17,9 +17,7 @@ class WelcomeMail extends Mailable
     ) {
     }
 
-    /**
-     * Build the welcome message with the user's name injected into the view.
-     */
+
     public function build(): self
     {
         return $this->subject('Hoş Geldin!')

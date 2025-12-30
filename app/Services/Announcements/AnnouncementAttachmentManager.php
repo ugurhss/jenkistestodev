@@ -8,24 +8,21 @@ use Illuminate\Http\UploadedFile;
 
 class AnnouncementAttachmentManager
 {
-    /**
-     * @param AttachmentAdapterInterface[] $adapters
-     */
-    public function __construct(
-        protected readonly iterable $adapters,
-    ) {
-    }
+
+    public function __construct(protected readonly iterable $adapters,)
+    { }
 
     /**
-     * Dosyaları ilgili duyuruya bağlayıp saklar.
+     * Dosyaları ilgili duyuruya ekliyorz.
      *
-     * @param UploadedFile[] $files
+
      */
     public function storeAttachments(array $files, GroupAnnouncement $announcement): void
     {
         foreach ($files as $file) {
             if (! $file instanceof UploadedFile) {
                 continue;
+                // echo "";
             }
 
             $adapter = $this->resolveAdapter($file);

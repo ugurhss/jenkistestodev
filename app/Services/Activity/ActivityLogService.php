@@ -122,58 +122,61 @@ class ActivityLogService
     }
 
 
-      public function logUnauthorizedGroupAccess(User $user, Group $group, string $action): void
+    public function logUnauthorizedGroupAccess(User $user, Group $group, string $action): void
     {
+        $groupName = $group->groups_name ?? ('#' . $group->id);
+        $actorName = $user->name ?? 'Bilinmeyen';
+
         $description = sprintf(
-            '"%s" adlı kullanıcı (ID: %d), "%s" adlı grupta "%s" işlemini yapmaya çalıştı fakat yetkisi yok.',
-            $user->name ?? 'Bilinmeyen',
-            $user->id,
-            $group->groups_name ?? ('#' . $group->id),
-            $action
+            'Yetkisiz Grup Erişimi: "%s" adlı grupta "%s" işlemini yapmaya çalıştı fakat yetkisi yok. İşlemi yapan: %s.',
+            $groupName,
+            $action,
+            $actorName
         );
 
         ActivityLog::create([
             'event'        => 'unauthorized_group_access',
             'description'  => $description,
             'actor_id'     => $user->id,
-            'actor_name'   => $user->name,
+            'actor_name'   => $actorName,
             'subject_type' => Group::class,
             'subject_id'   => $group->id,
             'meta'         => [
                 'action'    => $action,
                 'group_id'  => $group->id,
-                'group_name'=> $group->groups_name ?? null,
+                'group_name'=> $groupName,
                 'user_id'   => $user->id,
-                'user_name' => $user->name,
+                'user_name' => $actorName,
             ],
         ]);
     }
 
-
     public function logUnauthorizedAnnouncementAccess(User $user, GroupAnnouncement $announcement, string $action): void
     {
+        $announcementTitle = $announcement->title ?? ('#' . $announcement->id);
+        $actorName = $user->name ?? 'Bilinmeyen';
+
         $description = sprintf(
-            '"%s" adlı kullanıcı (ID: %d), "%s" başlıklı duyuruda "%s" işlemini yapmaya çalıştı fakat yetkisi yok.',
-            $user->name ?? 'Bilinmeyen',
-            $user->id,
-            $announcement->title ?? ('#' . $announcement->id),
-            $action
+            'Yetkisiz Duyuru Erişimi: "%s" duyurusunda "%s" işlemini yapmaya çalıştı fakat yetkisi yok. İşlemi yapan: %s.',
+            $announcementTitle,
+            $action,
+            $actorName
         );
 
         ActivityLog::create([
             'event'        => 'unauthorized_announcement_access',
             'description'  => $description,
             'actor_id'     => $user->id,
-            'actor_name'   => $user->name,
+            'actor_name'   => $actorName,
             'subject_type' => GroupAnnouncement::class,
             'subject_id'   => $announcement->id,
             'meta'         => [
                 'action'          => $action,
                 'announcement_id' => $announcement->id,
-                'title'           => $announcement->title,
+                'title'           => $announcementTitle,
                 'group_id'        => $announcement->group_id,
                 'user_id'         => $user->id,
-                'user_name'       => $user->name,
+                'user_name'       => $actorName,
             ],
         ]);
     }

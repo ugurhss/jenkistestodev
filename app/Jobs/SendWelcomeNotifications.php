@@ -19,8 +19,8 @@ class SendWelcomeNotifications implements ShouldQueue
 
     public function __construct(
         public readonly User $user,
-    ) {
-    }
+    )
+     {}
 
     /**
      * Execute the job by delegating to the welcome service.

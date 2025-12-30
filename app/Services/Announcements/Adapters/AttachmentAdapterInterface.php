@@ -10,5 +10,5 @@ interface AttachmentAdapterInterface
     public function supports(UploadedFile $file): bool;
 
 
-    public function upload(UploadedFile $file): array;
+    public function upload(UploadedFile $file): array; //data
 }
