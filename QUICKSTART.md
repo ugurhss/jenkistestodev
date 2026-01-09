@@ -3,6 +3,7 @@
 ## ⚡ 3 Adımda Jenkins'i Başlatın
 
 ### 1️⃣ Jenkins'i Başlat
+
 ```bash
 cd /Users/ugurcandogan/Desktop/adsız\ klasör\ 12/ytmOdevJenkisTest
 ./start.sh
@@ -18,31 +19,38 @@ Bu script:
 ## 📋 Pipeline Aşamaları (1-6)
 
 ### ✅ **1. Checkout** (5 puan)
+
 - GitHub'dan kodlar otomatik çekilir
 - Repository clone edilir
 
 ### ✅ **2. Build** (5 puan)
+
 - Composer bağımlılıkları yüklenir
 - NPM bağımlılıkları yüklenir
 - Frontend build edilir (Vite)
 
 ### ✅ **3. Unit Tests** (15 puan)
+
 - Tests çalıştırılır: `tests/Unit/*.php`
 - Sonuçlar JUnit raporu olarak kaydedilir
 - Jenkins'te görüntülenir
 
 ### ✅ **4. Feature/Integration Tests** (15 puan)
+
 - Tests çalıştırılır: `tests/Feature/*.php`
 - Database ile test edilir
 - JUnit raporu oluşturulur
 
 ### ✅ **5. Docker Containers** (5 puan)
+
 - PHP-FPM container başlatılır
 - MySQL database container başlatılır
 - Health checks yapılır
 
 ### ✅ **6. E2E Test Senaryoları** (55 puan)
+
 3 test senaryosu otomatik çalışır:
+
 - **Test 1**: `/api/health` - API sağlık kontrolü
 - **Test 2**: `/api/status` - Uygulama durumu
 - **Test 3**: `/api/db-status` - Database bağlantısı
@@ -56,6 +64,7 @@ Bu script:
 ```
 
 **İlk Giriş:**
+
 1. Console output'ta gösterilen password'u kopyalayın
 2. Suggested plugins'i yükleyin
 3. Admin kullanıcı oluşturun
@@ -65,12 +74,14 @@ Bu script:
 ## 🚀 Pipeline'ı Tetikle
 
 ### Otomatik (Push ile)
+
 ```bash
 git push origin main
 # Jenkins otomatik çalışacak!
 ```
 
 ### Manuel
+
 Jenkins Dashboard → Job seçin → **Build Now**
 
 ---
@@ -117,6 +128,7 @@ docker-compose -f docker-compose.jenkins.yml down
    - Script: `Jenkinsfile`
 
 4. **Webhook Ayarlayın**:
+
    ```bash
    python3 setup-webhook.py
    ```
