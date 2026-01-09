@@ -198,6 +198,7 @@ pipeline {
           echo "-> migrate:fresh"
           docker exec "$APP_CID" sh -lc "
             cd /app
+            export DB_HOST=db DB_PORT=3306 DB_DATABASE=laravel DB_USERNAME=laravel DB_PASSWORD=secret
             php artisan migrate:fresh --force
           "
         '''
