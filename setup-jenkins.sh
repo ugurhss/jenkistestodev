@@ -20,6 +20,15 @@ fi
 echo "✅ Docker ve Docker Compose kurulu"
 echo ""
 
+# Docker socket grup ID'sini al (macOS ve Linux uyumlu)
+if [ -S /var/run/docker.sock ]; then
+    DOCKER_GID=$(stat -f "%g" /var/run/docker.sock 2>/dev/null || stat -c "%g" /var/run/docker.sock)
+    export DOCKER_GID
+    echo "✅ Docker socket group id: ${DOCKER_GID}"
+else
+    echo "⚠️  /var/run/docker.sock bulunamadı; DOCKER_GID ayarlanmadı"
+fi
+
 # Jenkins container'ını başlat
 echo "📦 Jenkins Container'ı Başlatılıyor..."
 docker-compose -f docker-compose.jenkins.yml up -d
