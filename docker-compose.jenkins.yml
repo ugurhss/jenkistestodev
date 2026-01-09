@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins-laravel
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/local/bin/docker:/usr/local/bin/docker
+    environment:
+      - JENKINS_OPTS=--httpPort=8080
+      - JAVA_OPTS=-Xmx2048m
+    networks:
+      - jenkins-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Optional: Docker Compose App for testing
+  app:
+    image: php:8.3-fpm
+    container_name: laravel-app-test
+    volumes:
+      - .:/app
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=laravel
+      - DB_USERNAME=laravel
+      - DB_PASSWORD=secret
+    networks:
+      - jenkins-network
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    container_name: laravel-db-test
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - jenkins-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  jenkins_home:
+    driver: local
+  db_data:
+    driver: local
+
+networks:
+  jenkins-network:
+    driver: bridge
