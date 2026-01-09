@@ -2,16 +2,16 @@ version: '3.8'
 
 services:
   jenkins:
-    image: jenkins/jenkins:lts-jdk17
+    build:
+      context: .
+      dockerfile: ci/Dockerfile.jenkins
     container_name: jenkins-laravel
-    user: root
     ports:
       - "8080:8080"
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/local/bin/docker:/usr/local/bin/docker
     environment:
       - JENKINS_OPTS=--httpPort=8080
       - JAVA_OPTS=-Xmx2048m
