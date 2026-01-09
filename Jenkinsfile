@@ -206,6 +206,19 @@ pipeline {
             sleep 2
           done
 
+          # Hala healthy değilse detaylı log dökümü al
+          if [ "$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' "$APP_CID" 2>/dev/null || true)" != "healthy" ]; then
+            echo "❌ APP healthcheck healthy olmadı. Loglar alınıyor..."
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs app --tail=200 || true
+            docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs db --tail=200 || true
+            echo "---- app container processes ----"
+            docker exec "$APP_CID" sh -lc "ps aux | head -n 50" || true
+            echo "---- laravel.log (son 200 satır) ----"
+            docker exec "$APP_CID" sh -lc "tail -n 200 /app/storage/logs/laravel.log || true" || true
+            exit 1
+          fi
+
           echo "== HEALTHCHECK SON DURUM =="
           docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
         '''
