@@ -182,7 +182,7 @@ pipeline {
             STATUS=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' "$DB_CID" 2>/dev/null || true)
             echo "DB health: $STATUS"
             [ "$STATUS" = "healthy" ] && break
-            sleep 2
+            sleep 1
           done
 
           # APP yoksa log bas ve fail (app crash olmuştur)
@@ -203,7 +203,7 @@ pipeline {
             AHS=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' "$APP_CID" 2>/dev/null || true)
             echo "APP health: $AHS"
             [ "$AHS" = "healthy" ] && break
-            sleep 2
+            sleep 1
           done
 
           # Hala healthy değilse detaylı log dökümü al
