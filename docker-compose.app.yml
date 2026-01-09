@@ -26,6 +26,9 @@ services:
       DB_DATABASE: laravel
       DB_USERNAME: laravel
       DB_PASSWORD: secret
+      SESSION_DRIVER: file
+      CACHE_STORE: file
+      QUEUE_CONNECTION: sync
     entrypoint: [ "/bin/sh", "/app/scripts/container-entrypoint.sh" ]
     healthcheck:
       test: [ "CMD-SHELL", "php -r \"exit(@file_get_contents('http://127.0.0.1:8000')===false ? 1 : 0);\"" ]
