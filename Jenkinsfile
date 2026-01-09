@@ -1,6 +1,9 @@
 pipeline {
   agent any
-  options { timestamps() }
+  options {
+    timestamps()
+    skipDefaultCheckout(true)
+  }
 
   environment {
     CI_IMAGE = "laravel-ci-image:latest"
@@ -19,6 +22,8 @@ pipeline {
 
     stage('Checkout') {
       steps {
+        deleteDir()
+        checkout scm
         sh '''
           set -e
           echo "== Checkout Debug =="
