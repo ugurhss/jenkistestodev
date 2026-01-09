@@ -152,6 +152,9 @@ pipeline {
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE
           echo "APP_SOURCE=$APP_SOURCE"
+          export SKIP_COMPOSER_INSTALL=1
+          export SKIP_NPM_INSTALL=1
+          export SKIP_VITE_BUILD=1
 
           echo "-> compose up"
           docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml up -d

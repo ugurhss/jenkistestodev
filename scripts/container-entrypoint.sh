@@ -13,7 +13,9 @@ if [ ! -f .env ]; then
 fi
 
 echo "[entrypoint] Ensuring Composer dependencies..."
-if [ ! -d vendor ] || [ ! -f vendor/autoload.php ]; then
+if [ "${SKIP_COMPOSER_INSTALL:-}" = "1" ]; then
+  echo "[entrypoint] SKIP_COMPOSER_INSTALL=1, skipping composer install"
+elif [ ! -d vendor ] || [ ! -f vendor/autoload.php ]; then
   composer install --no-interaction --prefer-dist --optimize-autoloader || true
 fi
 

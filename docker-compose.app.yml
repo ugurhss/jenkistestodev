@@ -29,6 +29,9 @@ services:
       SESSION_DRIVER: file
       CACHE_STORE: file
       QUEUE_CONNECTION: sync
+      SKIP_COMPOSER_INSTALL: ${SKIP_COMPOSER_INSTALL:-0}
+      SKIP_NPM_INSTALL: ${SKIP_NPM_INSTALL:-0}
+      SKIP_VITE_BUILD: ${SKIP_VITE_BUILD:-0}
     entrypoint: [ "/bin/sh", "/app/scripts/container-entrypoint.sh" ]
     healthcheck:
       test: [ "CMD-SHELL", "php -r \"exit(@file_get_contents('http://127.0.0.1:8000')===false ? 1 : 0);\"" ]
