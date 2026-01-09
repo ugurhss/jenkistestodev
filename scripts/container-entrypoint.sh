@@ -18,16 +18,27 @@ if [ ! -d vendor ] || [ ! -f vendor/autoload.php ]; then
 fi
 
 echo "[entrypoint] Ensuring NPM dependencies..."
-if [ ! -d node_modules ]; then
-  npm ci || true
+if [ "${SKIP_NPM_INSTALL:-}" = "1" ]; then
+  echo "[entrypoint] SKIP_NPM_INSTALL=1, skipping npm ci"
+else
+  # node_modules volume can exist but be empty; check for binaries
+  if [ ! -d node_modules ] || [ ! -d node_modules/.bin ]; then
+    npm ci || true
+  fi
 fi
 
 # Ensure node binaries are available in PATH (node_modules/.bin)
 export PATH="/app/node_modules/.bin:$PATH"
 
 echo "[entrypoint] Building frontend assets (Vite/Inertia/Vue)..."
-if [ -f package.json ]; then
-  npm run build || true
+if [ "${SKIP_VITE_BUILD:-}" = "1" ]; then
+  echo "[entrypoint] SKIP_VITE_BUILD=1, skipping npm run build"
+elif [ -f package.json ]; then
+  if [ -x /app/node_modules/.bin/vite ]; then
+    npm run build || true
+  else
+    echo "[entrypoint] vite binary missing; skipping build"
+  fi
 fi
 
 echo "[entrypoint] Generating app key and clearing caches"
