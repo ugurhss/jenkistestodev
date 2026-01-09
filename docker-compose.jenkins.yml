@@ -4,6 +4,7 @@ services:
   jenkins:
     image: jenkins/jenkins:lts-jdk17
     container_name: jenkins-laravel
+    user: root
     ports:
       - "8080:8080"
       - "50000:50000"
