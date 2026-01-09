@@ -44,6 +44,7 @@ chmod +x setup-jenkins.sh
 ```
 
 Bu script:
+
 - Docker container'ları başlatır
 - Jenkins'i 8080 portunda ayağa kaldırır
 - Initial admin password'u gösterir
@@ -79,6 +80,7 @@ python3 setup-webhook.py
 ```
 
 Bu script istenirse:
+
 - GitHub Personal Access Token (Settings → Developer settings → Personal access tokens)
 - Repository bilgilerinizi soracaktır
 - Webhook otomatik olarak GitHub'a eklenecektir
@@ -86,6 +88,7 @@ Bu script istenirse:
 #### Manuel Webhook Ekleme
 
 GitHub → Repository Settings → Webhooks → Add webhook:
+
 - **Payload URL**: `http://your-jenkins-url/github-webhook/`
 - **Content type**: `application/json`
 - **Events**: Push events
@@ -96,6 +99,7 @@ GitHub → Repository Settings → Webhooks → Add webhook:
 ## 🧪 Test Senaryoları
 
 ### Unit Tests
+
 ```bash
 php artisan test --testsuite=Unit
 ```
@@ -105,6 +109,7 @@ php artisan test --testsuite=Unit
 - GroupServiceTest.php - Group service testleri
 
 ### Feature Tests
+
 ```bash
 php artisan test --testsuite=Feature
 ```
@@ -116,6 +121,7 @@ php artisan test --testsuite=Feature
 - GroupAuthTest.php - Yetkilendirme testleri
 
 ### E2E Tests (Jenkins'te otomatik çalışır)
+
 - `/api/health` - Sağlık kontrolü
 - `/api/status` - Uygulama durumu
 - `/api/db-status` - Veritabanı durumu
@@ -125,12 +131,14 @@ php artisan test --testsuite=Feature
 ## 🚀 Pipeline Tetikleme
 
 ### Otomatik Tetikleme (Webhook ile)
+
 ```bash
 git push origin main
 # Jenkins otomatik olarak çalışacak!
 ```
 
 ### Manuel Tetikleme
+
 1. Jenkins Job sayfasına gidin
 2. **Build Now** butonuna tıklayın
 3. **Build History**'de ilerlemeyi izleyin
@@ -140,13 +148,16 @@ git push origin main
 ## 📊 Jenkins'te Sonuçları Görme
 
 ### Console Output
+
 - **Build History** → Build numarasını tıklayın → **Console Output**
 
 ### Test Reports
+
 - **Build** sayfasında **Test Results** görülür
 - Unit ve Integration test sonuçları burada
 
 ### Aşama Detayları
+
 - Pipeline stages görselleştirilir
 - Her aşamanın duruşu kontrolünü yapabilirsiniz
 
@@ -155,21 +166,25 @@ git push origin main
 ## 🐳 Docker Komutları
 
 ### Container Durumunu Kontrol Et
+
 ```bash
 docker-compose -f docker-compose.jenkins.yml ps
 ```
 
 ### Jenkins Loglarını Göster
+
 ```bash
 docker-compose -f docker-compose.jenkins.yml logs jenkins -f
 ```
 
 ### Tüm Container'ları Durdur
+
 ```bash
 docker-compose -f docker-compose.jenkins.yml down
 ```
 
 ### Tüm Container'ları Başlat
+
 ```bash
 docker-compose -f docker-compose.jenkins.yml up -d
 ```
@@ -187,16 +202,19 @@ docker-compose -f docker-compose.jenkins.yml up -d
 ## ❓ Sorun Giderme
 
 ### Jenkins başlamıyor
+
 ```bash
 docker-compose -f docker-compose.jenkins.yml logs jenkins
 ```
 
 ### Pipeline job çalışmıyor
+
 1. Pipeline job konfigürasyonunu kontrol edin
 2. GitHub repository erişimini kontrol edin
 3. Jenkins logs'ları kontrol edin
 
 ### Webhook çalışmıyor
+
 1. GitHub repository → Settings → Webhooks
 2. Son deliveryx'i kontrol edin
 3. Jenkins URL'i public olması gerekebilir
@@ -236,6 +254,7 @@ docker-compose -f docker-compose.jenkins.yml logs jenkins
 ## 📞 Destek
 
 Sorularınız için:
+
 1. Jenkins logs'ları kontrol edin
 2. GitHub Actions'dan esinlenebilirsiniz
 3. Docker logs'ları kontrol edin
