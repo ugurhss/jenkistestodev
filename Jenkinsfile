@@ -8,7 +8,9 @@ pipeline {
   environment {
     CI_IMAGE = "laravel-ci-image:latest"
 
-    // Jenkins HOME Docker volume adı (senin setup)
+    // Jenkins container adı (docker inspect ile host mount bulunacak)
+    JENKINS_CONTAINER = "jenkins-laravel"
+    // Fallback: Jenkins HOME Docker volume adı (gerekirse)
     JENKINS_VOL = "jenkins-laravel_jenkins_home"
 
     // Jenkins container içindeki workspace (Job adı: laravel-ci)
@@ -58,8 +60,16 @@ pipeline {
         sh '''
           set -e
           echo "== Composer Install =="
+          HOST_WS=$(docker inspect -f '{{ range .Mounts }}{{ if eq .Destination "/var/jenkins_home" }}{{ .Source }}{{ end }}{{ end }}' "${JENKINS_CONTAINER}" 2>/dev/null || true)
+          if [ -z "$HOST_WS" ]; then
+            HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}' 2>/dev/null || true)
+          fi
+          if [ -z "$HOST_WS" ]; then
+            echo "❌ Jenkins home mount bulunamadı"
+            exit 1
+          fi
           docker run --rm \
-            -v ${JENKINS_VOL}:/var/jenkins_home \
+            -v "${HOST_WS}:/var/jenkins_home" \
             -w ${WS} \
             ${CI_IMAGE} \
             sh -lc "pwd && ls -la && composer install --no-interaction --prefer-dist"
@@ -72,8 +82,16 @@ pipeline {
         sh '''
           set -e
           echo "== NPM Install & Build =="
+          HOST_WS=$(docker inspect -f '{{ range .Mounts }}{{ if eq .Destination "/var/jenkins_home" }}{{ .Source }}{{ end }}{{ end }}' "${JENKINS_CONTAINER}" 2>/dev/null || true)
+          if [ -z "$HOST_WS" ]; then
+            HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}' 2>/dev/null || true)
+          fi
+          if [ -z "$HOST_WS" ]; then
+            echo "❌ Jenkins home mount bulunamadı"
+            exit 1
+          fi
           docker run --rm \
-            -v ${JENKINS_VOL}:/var/jenkins_home \
+            -v "${HOST_WS}:/var/jenkins_home" \
             -w ${WS} \
             node:20-alpine \
             sh -lc "pwd && ls -la && npm ci && npm run build"
@@ -86,8 +104,16 @@ pipeline {
         sh '''
           set -e
           echo "== Unit Tests =="
+          HOST_WS=$(docker inspect -f '{{ range .Mounts }}{{ if eq .Destination "/var/jenkins_home" }}{{ .Source }}{{ end }}{{ end }}' "${JENKINS_CONTAINER}" 2>/dev/null || true)
+          if [ -z "$HOST_WS" ]; then
+            HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}' 2>/dev/null || true)
+          fi
+          if [ -z "$HOST_WS" ]; then
+            echo "❌ Jenkins home mount bulunamadı"
+            exit 1
+          fi
           docker run --rm \
-            -v ${JENKINS_VOL}:/var/jenkins_home \
+            -v "${HOST_WS}:/var/jenkins_home" \
             -w ${WS} \
             ${CI_IMAGE} \
             sh -lc "
@@ -114,8 +140,15 @@ pipeline {
           cd ${WS}
           echo "PWD=$(pwd)"
           ls -la docker-compose.app.yml
-          # Jenkins volume içindeki gerçek host path'i bulup compose'a APP_SOURCE olarak iletiyoruz
-          HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}')
+          # Jenkins container mount'undan host path'i bulup compose'a APP_SOURCE olarak iletiyoruz
+          HOST_WS=$(docker inspect -f '{{ range .Mounts }}{{ if eq .Destination "/var/jenkins_home" }}{{ .Source }}{{ end }}{{ end }}' "${JENKINS_CONTAINER}" 2>/dev/null || true)
+          if [ -z "$HOST_WS" ]; then
+            HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}' 2>/dev/null || true)
+          fi
+          if [ -z "$HOST_WS" ]; then
+            echo "❌ Jenkins home mount bulunamadı"
+            exit 1
+          fi
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE
           echo "APP_SOURCE=$APP_SOURCE"
@@ -187,7 +220,14 @@ pipeline {
 
           cd ${WS}
           # Compose çağrılarında aynı host path'ini tekrar export ediyoruz
-          HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}')
+          HOST_WS=$(docker inspect -f '{{ range .Mounts }}{{ if eq .Destination "/var/jenkins_home" }}{{ .Source }}{{ end }}{{ end }}' "${JENKINS_CONTAINER}" 2>/dev/null || true)
+          if [ -z "$HOST_WS" ]; then
+            HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}' 2>/dev/null || true)
+          fi
+          if [ -z "$HOST_WS" ]; then
+            echo "❌ Jenkins home mount bulunamadı"
+            exit 1
+          fi
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE
           echo "APP_SOURCE=$APP_SOURCE"
@@ -218,7 +258,14 @@ pipeline {
 
           cd ${WS}
           # APP_SOURCE olmadan container içinde proje dosyaları bulunamıyor
-          HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}')
+          HOST_WS=$(docker inspect -f '{{ range .Mounts }}{{ if eq .Destination "/var/jenkins_home" }}{{ .Source }}{{ end }}{{ end }}' "${JENKINS_CONTAINER}" 2>/dev/null || true)
+          if [ -z "$HOST_WS" ]; then
+            HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}' 2>/dev/null || true)
+          fi
+          if [ -z "$HOST_WS" ]; then
+            echo "❌ Jenkins home mount bulunamadı"
+            exit 1
+          fi
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE
           echo "APP_SOURCE=$APP_SOURCE"
@@ -274,7 +321,14 @@ EOF
 
           cd ${WS}
           # E2E öncesinde de aynı mount ayarı gerekli
-          HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}')
+          HOST_WS=$(docker inspect -f '{{ range .Mounts }}{{ if eq .Destination "/var/jenkins_home" }}{{ .Source }}{{ end }}{{ end }}' "${JENKINS_CONTAINER}" 2>/dev/null || true)
+          if [ -z "$HOST_WS" ]; then
+            HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}' 2>/dev/null || true)
+          fi
+          if [ -z "$HOST_WS" ]; then
+            echo "❌ Jenkins home mount bulunamadı"
+            exit 1
+          fi
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE
           echo "APP_SOURCE=$APP_SOURCE"
@@ -319,14 +373,17 @@ CHECK_URLS="http://127.0.0.1:8000 http://127.0.0.1:8000/login http://127.0.0.1:8
       sh '''
         echo "== Post: Cleanup =="
         cd ${WS} || true
-        if docker volume inspect ${JENKINS_VOL} >/dev/null 2>&1; then
-          # Cleanup sırasında bile APP_SOURCE'ı host path'i ile senkron tut
-          HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}')
+        # Cleanup sırasında bile APP_SOURCE'ı host path'i ile senkron tut
+        HOST_WS=$(docker inspect -f '{{ range .Mounts }}{{ if eq .Destination "/var/jenkins_home" }}{{ .Source }}{{ end }}{{ end }}' "${JENKINS_CONTAINER}" 2>/dev/null || true)
+        if [ -z "$HOST_WS" ]; then
+          HOST_WS=$(docker volume inspect ${JENKINS_VOL} -f '{{.Mountpoint}}' 2>/dev/null || true)
+        fi
+        if [ -n "$HOST_WS" ]; then
           APP_SOURCE="$HOST_WS/workspace/laravel-ci"
           export APP_SOURCE
           echo "APP_SOURCE=$APP_SOURCE"
         else
-          echo "⚠️ Jenkins volume ${JENKINS_VOL} inspect failed; using default APP_SOURCE"
+          echo "⚠️ Jenkins home mount bulunamadı; APP_SOURCE set edilmedi"
         fi
         docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml ps || true
         docker compose -p ${COMPOSE_PROJECT_NAME} -f docker-compose.app.yml logs app --tail=120 || true
