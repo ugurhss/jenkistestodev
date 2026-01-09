@@ -6,6 +6,7 @@ services:
       context: .
       dockerfile: ci/Dockerfile.jenkins
     container_name: jenkins-laravel
+    user: root
     ports:
       - "8080:8080"
       - "50000:50000"
